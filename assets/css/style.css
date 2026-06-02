@@ -280,3 +280,48 @@ body {
     border-radius: 5px;
     color: #1e8449;
 }
+
+/* Reportes - resumen */
+.reporte-resumen {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+.resumen-card {
+    background: white;
+    border-radius: 10px;
+    padding: 1.2rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+.resumen-num {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #1a3c5e;
+}
+.resumen-label {
+    font-size: 0.82rem;
+    color: #666;
+    margin-top: 0.3rem;
+}
+
+/* Barra de ocupación */
+.barra-container {
+    background: #ecf0f1;
+    border-radius: 10px;
+    height: 10px;
+    width: 100%;
+    margin-bottom: 0.2rem;
+}
+.barra-fill {
+    height: 10px;
+    border-radius: 10px;
+    transition: width 0.3s;
+}
+.barra-verde   { background: #27ae60; }
+.barra-amarilla{ background: #f39c12; }
+.barra-roja    { background: #e74c3c; }
