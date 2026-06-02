@@ -122,3 +122,83 @@ body {
 .card-icon { font-size: 2.5rem; margin-bottom: 0.8rem; }
 .card h3   { color: #1a3c5e; margin-bottom: 0.4rem; }
 .card p    { font-size: 0.88rem; color: #666; }
+
+/* Page header */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+.page-header h1 { color: #1a3c5e; }
+
+/* Botones */
+.btn-primary {
+    background-color: #1a3c5e;
+    color: white;
+    padding: 0.55rem 1.2rem;
+    border-radius: 6px;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.95rem;
+    display: inline-block;
+}
+.btn-primary:hover { background-color: #2a5f8f; }
+
+.btn-secondary {
+    background-color: #ecf0f1;
+    color: #333;
+    padding: 0.55rem 1.2rem;
+    border-radius: 6px;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.95rem;
+    display: inline-block;
+}
+.btn-secondary:hover { background-color: #d5dbdb; }
+
+.btn-danger {
+    background-color: #e74c3c;
+    color: white;
+    padding: 0.55rem 1.2rem;
+    border-radius: 6px;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.95rem;
+    display: inline-block;
+}
+.btn-danger:hover { background-color: #c0392b; }
+
+.btn-group { display: flex; gap: 0.5rem; margin-top: 0.8rem; }
+
+/* Curso card */
+.curso-card { text-align: left; }
+.curso-card h3 { color: #1a3c5e; margin-bottom: 0.5rem; }
+.curso-desc { font-size: 0.88rem; color: #555; margin-bottom: 0.8rem; }
+.curso-info { display: flex; flex-direction: column; gap: 0.3rem; margin-bottom: 1rem; font-size: 0.88rem; }
+.cupos { font-weight: 600; color: #27ae60; }
+.sin-cupos { color: #e74c3c; }
+
+/* Formularios */
+.form-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    max-width: 600px;
+}
+.form-card label { display: block; margin: 0.8rem 0 0.3rem; font-weight: 600; }
+.form-card input,
+.form-card textarea,
+.form-card select {
+    width: 100%;
+    padding: 0.6rem 0.8rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-family: inherit;
+}
+.form-card button { margin-top: 1.2rem; }
