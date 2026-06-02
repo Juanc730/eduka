@@ -223,3 +223,26 @@ body {
 /* Badges estado */
 .badge-activo   { background: #d5f5e3; color: #1e8449; padding: 0.2rem 0.7rem; border-radius: 20px; font-size: 0.82rem; font-weight: 600; }
 .badge-inactivo { background: #fdecea; color: #c0392b; padding: 0.2rem 0.7rem; border-radius: 20px; font-size: 0.82rem; font-weight: 600; }
+
+/* Estados de matrícula y pago */
+.estado-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+.estado-pendiente  { background: #fef9e7; color: #d68910; }
+.estado-confirmada { background: #d5f5e3; color: #1e8449; }
+.estado-aprobado   { background: #d5f5e3; color: #1e8449; }
+.estado-anulada    { background: #fdecea; color: #c0392b; }
+.estado-rechazado  { background: #fdecea; color: #c0392b; }
+
+/* Aviso pago */
+.aviso-pago {
+    background: #fef9e7;
+    border-left: 4px solid #f39c12;
+    padding: 0.8rem 1rem;
+    border-radius: 5px;
+    margin-top: 1rem;
+    font-size: 0.92rem;
+}
