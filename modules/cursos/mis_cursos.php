@@ -1,4 +1,5 @@
 <?php
+$page_title = 'Mis Cursos';
 require_once '../../includes/header.php';
 require_once '../../config/database.php';
 

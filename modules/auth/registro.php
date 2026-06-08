@@ -30,6 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 ?>
+<?php $page_title = 'Crear Cuenta'; ?>
 <?php include '../../includes/header.php'; ?>
 
 <div class="auth-container">

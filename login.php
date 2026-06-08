@@ -28,13 +28,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 ?>
+<?php $page_title = 'Iniciar Sesión'; ?>
 <?php include 'includes/header.php'; ?>
 
 <div class="auth-container">
     <div class="auth-card">
         <h2>Iniciar Sesión</h2>
-        <?php if ($error): ?>
-            <p class="error"><?= htmlspecialchars($error) ?></p>
+        <?php if (isset($_GET['error'])): ?>
+            <p class="error"><?= htmlspecialchars($_GET['error']) ?></p>
         <?php endif; ?>
         <form method="POST">
             <label>Correo electrónico</label>

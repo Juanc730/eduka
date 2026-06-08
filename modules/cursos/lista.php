@@ -1,4 +1,5 @@
-<?php
+<?php 
+$page_title = 'Cursos';
 require_once '../../includes/header.php';
 require_once '../../config/database.php';
 
@@ -16,6 +17,7 @@ $stmt = $pdo->query("SELECT c.*, u.nombre AS docente_nombre, u.apellido AS docen
                      WHERE c.estado = 'activo'");
 $cursos = $stmt->fetchAll();
 ?>
+
 
 <?php include '../../includes/navbar.php'; ?>
 

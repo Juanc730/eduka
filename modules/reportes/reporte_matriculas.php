@@ -1,4 +1,5 @@
 <?php
+$page_title = 'Matrículas por Curso';
 require_once '../../includes/header.php';
 require_once '../../config/database.php';
 

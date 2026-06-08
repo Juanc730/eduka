@@ -1,4 +1,5 @@
 <?php
+$page_title = 'Editar Curso';
 require_once '../../includes/header.php';
 require_once '../../config/database.php';
 
@@ -40,6 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 ?>
+
 
 <?php include '../../includes/navbar.php'; ?>
 

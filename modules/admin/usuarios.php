@@ -1,4 +1,5 @@
 <?php
+$page_title = 'Gestión de Usuarios';
 require_once '../../includes/header.php';
 require_once '../../config/database.php';
 
