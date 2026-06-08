@@ -325,3 +325,29 @@ body {
 .barra-verde   { background: #27ae60; }
 .barra-amarilla{ background: #f39c12; }
 .barra-roja    { background: #e74c3c; }
+
+/* 404 */
+.container-404 {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(80vh - 60px);
+    width: 100%;
+    padding: 2rem;
+    box-sizing: border-box;
+}
+.card-404 {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    padding: 3rem 2rem;
+    text-align: center;
+    width: 100%;
+    max-width: 420px;
+    margin: 0 auto;
+}
+.icon-404 { font-size: 4rem; margin-bottom: 0.5rem; }
+.card-404 h1 { font-size: 5rem; color: #1a3c5e; line-height: 1; margin-bottom: 0.3rem; }
+.card-404 h2 { color: #333; margin-bottom: 1rem; }
+.card-404 p  { color: #666; margin-bottom: 1.5rem; }
+.card-404 a  { display: inline-block; }

@@ -1,0 +1,8 @@
+ErrorDocument 404 /eduka/404.php
+
+Options -Indexes
+
+<FilesMatch "\.(sql|md|yml|gitignore)$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
