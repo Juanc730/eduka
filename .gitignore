@@ -1,0 +1,4 @@
+uploads/comprobantes/*
+!uploads/comprobantes/index.php
+config/database.php
+.env
