@@ -13,9 +13,20 @@ $rol = $_SESSION['rol'];
 
 <?php include 'includes/navbar.php'; ?>
 
+<?php
+$dias   = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+$meses  = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+$fecha  = $dias[date('w')] . ', ' . date('j') . ' de ' . $meses[date('n') - 1] . ' de ' . date('Y');
+?>
+
 <div class="dashboard-container">
-    <h1>Bienvenido, <?= htmlspecialchars($_SESSION['nombre']) ?></h1>
-    <p class="rol-badge rol-<?= $rol ?>"><?= ucfirst($rol) ?></p>
+    <div class="bienvenida-header">
+        <div>
+            <h1>Bienvenido, <?= htmlspecialchars($_SESSION['nombre']) ?> 👋</h1>
+            <p class="fecha-hoy">📅 <?= $fecha ?></p>
+        </div>
+        <p class="rol-badge rol-<?= $rol ?>"><?= ucfirst($rol) ?></p>
+    </div>
 
     <div class="cards-grid">
 

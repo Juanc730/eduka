@@ -91,7 +91,7 @@ body {
     border-radius: 20px;
     font-size: 0.85rem;
     font-weight: 600;
-    margin-bottom: 2rem;
+    margin-bottom: 0;
     text-transform: uppercase;
     letter-spacing: 0.05em;
 }
@@ -432,4 +432,23 @@ body {
 .input-password.input-error {
     border-color: #e74c3c !important;
     background-color: #fff8f8 !important;
+}
+
+/* Bienvenida dashboard */
+.bienvenida-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+.bienvenida-header h1 {
+    font-size: 1.8rem;
+    color: #1a3c5e;
+    margin-bottom: 0.3rem;
+}
+.fecha-hoy {
+    color: #666;
+    font-size: 0.95rem;
 }
