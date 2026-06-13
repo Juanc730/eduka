@@ -30,14 +30,21 @@ if (isset($_GET['accion']) && isset($_GET['pago_id'])) {
     exit;
 }
 
-$pagos = $pdo->query("SELECT p.*, 
+$total      = $pdo->query("SELECT COUNT(*) FROM pagos")->fetchColumn();
+$por_pagina = 10;
+$pagina     = isset($_GET['pagina']) ? max(1, (int)$_GET['pagina']) : 1;
+$offset     = ($pagina - 1) * $por_pagina;
+$total_pags = ceil($total / $por_pagina);
+
+$pagos = $pdo->query("SELECT p., 
                              CONCAT(u.nombre, ' ', u.apellido) AS estudiante,
                              c.nombre AS curso
                       FROM pagos p
                       JOIN matriculas m ON p.matricula_id = m.id
                       JOIN usuarios u ON m.estudiante_id = u.id
                       JOIN cursos c ON m.curso_id = c.id
-                      ORDER BY p.estado ASC, p.fecha DESC")->fetchAll();
+                      ORDER BY p.estado ASC, p.fecha DESC
+                      LIMIT $por_pagina OFFSET $offset")->fetchAll();
 ?>
 
 <?php include '../../includes/navbar.php'; ?>
@@ -100,5 +107,24 @@ $pagos = $pdo->query("SELECT p.*,
         </div>
     <?php endif; ?>
 </div>
+
+<?php if ($total_pags > 1): ?>
+    <div class="paginacion">
+        <?php if ($pagina > 1): ?>
+            <a href="?pagina=<?= $pagina - 1 ?>" class="pag-btn">← Anterior</a>
+        <?php endif; ?>
+
+        <?php for ($i = 1; $i <= $total_pags; $i++): ?>
+            <a href="?pagina=<?= $i ?>" class="pag-btn <?= $i === $pagina ? 'pag-activa' : '' ?>">
+                <?= $i ?>
+            </a>
+        <?php endfor; ?>
+
+        <?php if ($pagina < $total_pags): ?>
+            <a href="?pagina=<?= $pagina + 1 ?>" class="pag-btn">Siguiente →</a>
+        <?php endif; ?>
+    </div>
+    <p class="pag-info">Mostrando <?= count($pagos) ?> de <?= $total ?> pagos — Página <?= $pagina ?> de <?= $total_pags ?></p>
+<?php endif; ?>
 
 <?php include '../../includes/footer.php'; ?>

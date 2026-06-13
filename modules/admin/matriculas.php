@@ -60,6 +60,22 @@ $sql = "SELECT m.id, m.fecha, m.estado,
         " . ($where ? 'WHERE ' . implode(' AND ', $where) : '') . "
         ORDER BY m.fecha DESC";
 
+// Contar total para paginación
+$sql_count = "SELECT COUNT(*) FROM matriculas m
+              JOIN usuarios u ON m.estudiante_id = u.id
+              JOIN cursos c ON m.curso_id = c.id
+              LEFT JOIN pagos p ON p.matricula_id = m.id
+              " . ($where ? 'WHERE ' . implode(' AND ', $where) : '');
+$stmt_count = $pdo->prepare($sql_count);
+$stmt_count->execute($params);
+$total      = $stmt_count->fetchColumn();
+
+$por_pagina = 10;
+$pagina     = isset($_GET['pagina']) ? max(1, (int)$_GET['pagina']) : 1;
+$offset     = ($pagina - 1) * $por_pagina;
+$total_pags = ceil($total / $por_pagina);
+
+$sql .= " LIMIT $por_pagina OFFSET $offset";
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $matriculas = $stmt->fetchAll();
@@ -180,5 +196,31 @@ $matriculas = $stmt->fetchAll();
         </div>
     <?php endif; ?>
 </div>
+
+<?php if ($total_pags > 1): ?>
+    <div class="paginacion">
+        <?php
+        // Preservar filtros en la paginación
+        $query = http_build_query(array_filter([
+            'curso_id' => $filtro_curso,
+            'estado'   => $filtro_estado
+        ]));
+        ?>
+        <?php if ($pagina > 1): ?>
+            <a href="?<?= $query ?>&pagina=<?= $pagina - 1 ?>" class="pag-btn">← Anterior</a>
+        <?php endif; ?>
+
+        <?php for ($i = 1; $i <= $total_pags; $i++): ?>
+            <a href="?<?= $query ?>&pagina=<?= $i ?>" class="pag-btn <?= $i === $pagina ? 'pag-activa' : '' ?>">
+                <?= $i ?>
+            </a>
+        <?php endfor; ?>
+
+        <?php if ($pagina < $total_pags): ?>
+            <a href="?<?= $query ?>&pagina=<?= $pagina + 1 ?>" class="pag-btn">Siguiente →</a>
+        <?php endif; ?>
+    </div>
+    <p class="pag-info">Mostrando <?= count($matriculas) ?> de <?= $total ?> matrículas — Página <?= $pagina ?> de <?= $total_pags ?></p>
+<?php endif; ?>
 
 <?php include '../../includes/footer.php'; ?>
