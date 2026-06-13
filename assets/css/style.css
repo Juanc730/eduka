@@ -416,3 +416,20 @@ body {
 .auth-card .toggle-pass:hover {
     background-color: #e0e7ef;
 }
+
+/* Validación de campos */
+.campo-error {
+    color: #e74c3c;
+    font-size: 0.82rem;
+    margin-top: 0.25rem;
+    min-height: 1rem;
+}
+.input-error {
+    border-color: #e74c3c !important;
+    background-color: #fff8f8 !important;
+}
+
+.input-password.input-error {
+    border-color: #e74c3c !important;
+    background-color: #fff8f8 !important;
+}
