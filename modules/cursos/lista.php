@@ -47,9 +47,35 @@ $cursos = $stmt->fetchAll();
                     <div class="curso-info">
                         <span>👨‍🏫 <?= htmlspecialchars($curso['docente_nombre'] . ' ' . $curso['docente_apellido']) ?></span>
                         <span>🕐 <?= htmlspecialchars($curso['horario']) ?></span>
-                        <span class="cupos <?= $curso['cupos_disponibles'] == 0 ? 'sin-cupos' : '' ?>">
-                            🪑 <?= $curso['cupos_disponibles'] ?> / <?= $curso['cupos_totales'] ?> cupos
-                        </span>
+                        <?php
+                        $disponibles  = $curso['cupos_disponibles'];
+                        $totales      = $curso['cupos_totales'];
+                        $porcentaje   = $totales > 0 ? ($disponibles / $totales) * 100 : 0;
+                        
+                        if ($disponibles == 0) {
+                            $cupo_clase = 'cupos-agotado';
+                            $cupo_icono = '🔴';
+                            $cupo_texto = 'Sin cupos disponibles';
+                        } elseif ($porcentaje <= 25) {
+                            $cupo_clase = 'cupos-critico';
+                            $cupo_icono = '🟠';
+                            $cupo_texto = "¡Solo $disponibles cupo(s) disponible(s)!";
+                        } elseif ($porcentaje <= 50) {
+                            $cupo_clase = 'cupos-medio';
+                            $cupo_icono = '🟡';
+                            $cupo_texto = "$disponibles / $totales cupos";
+                        } else {
+                            $cupo_clase = 'cupos-ok';
+                            $cupo_icono = '🟢';
+                            $cupo_texto = "$disponibles / $totales cupos";
+                        }
+                        ?>
+                        <div class="cupo-indicador <?= $cupo_clase ?>">
+                            <span><?= $cupo_icono ?> <?= $cupo_texto ?></span>
+                            <div class="cupo-barra-container">
+                                <div class="cupo-barra-fill" style="width: <?= $porcentaje ?>%"></div>
+                            </div>
+                        </div>
                     </div>
 
                     <?php if ($rol === 'estudiante'): ?>

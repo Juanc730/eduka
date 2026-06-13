@@ -452,3 +452,29 @@ body {
     color: #666;
     font-size: 0.95rem;
 }
+
+/* Indicador de cupos en lista de cursos */
+.cupo-indicador {
+    padding: 0.5rem 0.7rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 0.8rem;
+}
+.cupo-barra-container {
+    background: rgba(0,0,0,0.1);
+    border-radius: 10px;
+    height: 6px;
+    margin-top: 0.4rem;
+    width: 100%;
+}
+.cupo-barra-fill {
+    height: 6px;
+    border-radius: 10px;
+    transition: width 0.3s;
+    background: currentColor;
+}
+.cupos-ok      { background: #eafaf1; color: #27ae60; }
+.cupos-medio   { background: #fef9e7; color: #d68910; }
+.cupos-critico { background: #fdebd0; color: #e67e22; }
+.cupos-agotado { background: #fdecea; color: #e74c3c; }
