@@ -12,6 +12,7 @@ $error   = '';
 $success = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrf_verificar();
     $codigo   = strtoupper(trim($_POST['codigo']));
     $monto    = (float)$_POST['monto'];
     $pagador  = trim($_POST['nombre_pagador']);
@@ -56,6 +57,7 @@ $operaciones = $pdo->query("SELECT * FROM yape_operaciones ORDER BY created_at D
     <div class="form-card" style="margin-bottom:2rem;">
         <h3 style="margin-bottom:1rem;">Registrar nuevo código</h3>
         <form method="POST">
+            <input type="hidden" name="csrf_token" value="<?= csrf_generar() ?>">
             <label>Código de operación *</label>
             <input type="text" name="codigo" placeholder="Ej: YPE-20260601-84521" style="text-transform:uppercase;" required>
 

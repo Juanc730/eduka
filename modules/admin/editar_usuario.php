@@ -36,6 +36,7 @@ function validar_password($password) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrf_verificar();
     $nombre   = trim($_POST['nombre']);
     $apellido = trim($_POST['apellido']);
     $email    = trim($_POST['email']);
@@ -87,6 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <div class="form-card">
         <form method="POST">
+            <input type="hidden" name="csrf_token" value="<?= csrf_generar() ?>">
             <label>Nombre *</label>
             <input type="text" name="nombre" required value="<?= htmlspecialchars($usuario['nombre']) ?>">
 

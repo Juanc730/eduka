@@ -2,6 +2,7 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+require_once __DIR__ . '/csrf.php';
 
 // Verificar que el usuario sigue activo en la base de datos
 if (isset($_SESSION['usuario_id'])) {

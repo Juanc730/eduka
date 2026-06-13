@@ -26,6 +26,7 @@ if ($resultado['intentos'] >= $limite) {
 }
 
 if (!$bloqueado && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrf_verificar();
     $email    = trim($_POST['email']);
     $password = $_POST['password'];
 
@@ -86,6 +87,7 @@ if (!$bloqueado && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <?php if (!$bloqueado): ?>
         <form method="POST" id="form-login" novalidate>
+            <input type="hidden" name="csrf_token" value="<?= csrf_generar() ?>">
             <label>Correo electrónico</label>
             <input type="email" name="email" id="email"
                    value="<?= htmlspecialchars($_POST['email'] ?? '') ?>"

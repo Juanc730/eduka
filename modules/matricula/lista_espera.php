@@ -29,6 +29,7 @@ if ($stmt->fetch()) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrf_verificar();
     $stmt = $pdo->prepare("INSERT INTO lista_espera (estudiante_id, curso_id) VALUES (?, ?)");
     $stmt->execute([$estudiante_id, $curso_id]);
     header('Location: /eduka/modules/matricula/mis_matriculas.php');
@@ -53,6 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
 
         <form method="POST">
+            <input type="hidden" name="csrf_token" value="<?= csrf_generar() ?>">
             <button type="submit" class="btn-primary" style="margin-top:1rem;">Unirme a la lista de espera</button>
         </form>
     </div>

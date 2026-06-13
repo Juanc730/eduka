@@ -40,6 +40,7 @@ if ($curso['cupos_disponibles'] <= 0) {
 
 // Confirmar matrícula
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrf_verificar();
     try {
         $pdo->beginTransaction();
 
@@ -87,6 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
 
         <form method="POST">
+            <input type="hidden" name="csrf_token" value="<?= csrf_generar() ?>">
             <button type="submit" class="btn-primary" style="margin-top:1rem;">Confirmar y continuar al pago</button>
         </form>
     </div>

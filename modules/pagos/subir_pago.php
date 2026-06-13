@@ -36,6 +36,7 @@ $success = '';
 
 // ── Procesar código Yape ──────────────────────────────────────────
 if (isset($_POST['metodo']) && $_POST['metodo'] === 'codigo') {
+    csrf_verificar();
     $codigo = strtoupper(trim($_POST['codigo_yape']));
     $monto  = (float)$_POST['monto'];
 
@@ -74,6 +75,7 @@ if (isset($_POST['metodo']) && $_POST['metodo'] === 'codigo') {
 
 // ── Procesar comprobante imagen ───────────────────────────────────
 if (isset($_POST['metodo']) && $_POST['metodo'] === 'comprobante') {
+    csrf_verificar();
     if (!isset($_FILES['comprobante']) || $_FILES['comprobante']['error'] !== 0) {
         $error = 'Debes seleccionar un archivo de comprobante.';
     } else {
@@ -159,6 +161,7 @@ if (isset($_POST['metodo']) && $_POST['metodo'] === 'comprobante') {
                 <strong>📱 Verificación automática:</strong> Ingresa el código de operación que aparece en tu app Yape al completar el pago. La confirmación es inmediata.
             </div>
             <form method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="<?= csrf_generar() ?>">
                 <input type="hidden" name="metodo" value="codigo">
                 <label>Código de operación Yape *</label>
                 <input type="text" name="codigo_yape" placeholder="Ej: YPE-20260601-84521" required style="text-transform:uppercase;">
@@ -174,6 +177,7 @@ if (isset($_POST['metodo']) && $_POST['metodo'] === 'comprobante') {
                 <strong>🖼️ Verificación manual:</strong> Sube una captura de tu pago Yape. El administrador la revisará y confirmará tu matrícula.
             </div>
             <form method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="<?= csrf_generar() ?>">
                 <input type="hidden" name="metodo" value="comprobante">
                 <label>Monto pagado (S/) *</label>
                 <input type="number" name="monto" step="0.01" min="1" placeholder="Ej: 150.00" required>

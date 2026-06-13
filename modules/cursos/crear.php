@@ -14,6 +14,7 @@ $error = '';
 $docentes = $pdo->query("SELECT id, nombre, apellido FROM usuarios WHERE rol_id = 3 AND activo = 1")->fetchAll();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrf_verificar();
     $nombre     = trim($_POST['nombre']);
     $descripcion = trim($_POST['descripcion']);
     $docente_id = $_POST['docente_id'];
@@ -47,6 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <div class="form-card">
         <form method="POST">
+            <input type="hidden" name="csrf_token" value="<?= csrf_generar() ?>">
             <label>Nombre del curso *</label>
             <input type="text" name="nombre" required>
 
