@@ -8,20 +8,31 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'administrador') {
     exit;
 }
 
+$buscar     = isset($_GET['buscar']) ? trim($_GET['buscar']) : '';
 $por_pagina = 5;
 $pagina     = isset($_GET['pagina']) ? max(1, (int)$_GET['pagina']) : 1;
 $offset     = ($pagina - 1) * $por_pagina;
 
-$total      = $pdo->query("SELECT COUNT(*) FROM usuarios")->fetchColumn();
+$where  = [];
+$params = [];
+
+if ($buscar) {
+    $where[]  = "(u.nombre LIKE ? OR u.apellido LIKE ? OR u.email LIKE ? OR r.nombre LIKE ?)";
+    $termino  = "%$buscar%";
+    $params   = [$termino, $termino, $termino, $termino];
+}
+
+$sql_base = "FROM usuarios u JOIN roles r ON u.rol_id = r.id"
+          . ($where ? ' WHERE ' . implode(' AND ', $where) : '');
+
+$total      = $pdo->prepare("SELECT COUNT(*) $sql_base");
+$total->execute($params);
+$total      = $total->fetchColumn();
 $total_pags = ceil($total / $por_pagina);
 
-$usuarios = $pdo->prepare("SELECT u.*, r.nombre AS rol 
-                            FROM usuarios u 
-                            JOIN roles r ON u.rol_id = r.id 
-                            ORDER BY u.rol_id, u.nombre
-                            LIMIT $por_pagina OFFSET $offset");
-$usuarios->execute();
-$usuarios = $usuarios->fetchAll();
+$stmt = $pdo->prepare("SELECT u.*, r.nombre AS rol $sql_base ORDER BY u.rol_id, u.nombre LIMIT $por_pagina OFFSET $offset");
+$stmt->execute($params);
+$usuarios = $stmt->fetchAll();
 ?>
 
 <?php include '../../includes/navbar.php'; ?>
@@ -39,6 +50,22 @@ $usuarios = $usuarios->fetchAll();
         <p class="error" style="margin-bottom:1rem;"><?= htmlspecialchars($_GET['error']) ?></p>
     <?php endif; ?>
 
+    <!-- Buscador -->
+    <form method="GET" class="buscador-container">
+        <input type="text" name="buscar" value="<?= htmlspecialchars($buscar) ?>"
+               placeholder="🔍 Buscar por nombre, correo o rol..." class="buscador-input">
+        <button type="submit" class="btn-primary">Buscar</button>
+        <?php if ($buscar): ?>
+            <a href="/eduka/modules/admin/usuarios.php" class="btn-secondary">Limpiar</a>
+        <?php endif; ?>
+    </form>
+
+    <?php if ($buscar): ?>
+        <p class="buscador-contador" style="margin-bottom:1rem;">
+            <?= $total ?> resultado(s) para "<strong><?= htmlspecialchars($buscar) ?></strong>"
+        </p>
+    <?php endif; ?>
+
     <div class="table-container">
         <table class="tabla">
             <thead>
@@ -52,33 +79,37 @@ $usuarios = $usuarios->fetchAll();
                 </tr>
             </thead>
             <tbody>
-                <?php foreach ($usuarios as $u): ?>
-                    <tr>
-                        <td><?= $u['id'] ?></td>
-                        <td><?= htmlspecialchars($u['nombre'] . ' ' . $u['apellido']) ?></td>
-                        <td><?= htmlspecialchars($u['email']) ?></td>
-                        <td><span class="rol-badge rol-<?= $u['rol'] ?>"><?= ucfirst($u['rol']) ?></span></td>
-                        <td>
-                            <?php if ($u['activo']): ?>
-                                <span class="badge-activo">Activo</span>
-                            <?php else: ?>
-                                <span class="badge-inactivo">Inactivo</span>
-                            <?php endif; ?>
-                        </td>
-                        <td>
-                            <div class="btn-group">
-                                <a href="/eduka/modules/admin/editar_usuario.php?id=<?= $u['id'] ?>" class="btn-secondary">Editar</a>
-                                <?php if ($u['id'] !== $_SESSION['usuario_id']): ?>
-                                    <a href="/eduka/modules/admin/toggle_usuario.php?id=<?= $u['id'] ?>"
-                                       class="<?= $u['activo'] ? 'btn-danger' : 'btn-primary' ?>"
-                                       onclick="return confirm('¿Confirmas esta acción?')">
-                                        <?= $u['activo'] ? 'Desactivar' : 'Activar' ?>
-                                    </a>
+                <?php if (empty($usuarios)): ?>
+                    <tr><td colspan="6" style="text-align:center; color:#666;">No se encontraron resultados.</td></tr>
+                <?php else: ?>
+                    <?php foreach ($usuarios as $u): ?>
+                        <tr>
+                            <td><?= $u['id'] ?></td>
+                            <td><?= htmlspecialchars($u['nombre'] . ' ' . $u['apellido']) ?></td>
+                            <td><?= htmlspecialchars($u['email']) ?></td>
+                            <td><span class="rol-badge rol-<?= $u['rol'] ?>"><?= ucfirst($u['rol']) ?></span></td>
+                            <td>
+                                <?php if ($u['activo']): ?>
+                                    <span class="badge-activo">Activo</span>
+                                <?php else: ?>
+                                    <span class="badge-inactivo">Inactivo</span>
                                 <?php endif; ?>
-                            </div>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="/eduka/modules/admin/editar_usuario.php?id=<?= $u['id'] ?>" class="btn-secondary">Editar</a>
+                                    <?php if ($u['id'] !== $_SESSION['usuario_id']): ?>
+                                        <a href="/eduka/modules/admin/toggle_usuario.php?id=<?= $u['id'] ?>"
+                                           class="<?= $u['activo'] ? 'btn-danger' : 'btn-primary' ?>"
+                                           onclick="return confirm('¿Confirmas esta acción?')">
+                                            <?= $u['activo'] ? 'Desactivar' : 'Activar' ?>
+                                        </a>
+                                    <?php endif; ?>
+                                </div>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php endif; ?>
             </tbody>
         </table>
     </div>
@@ -86,17 +117,15 @@ $usuarios = $usuarios->fetchAll();
     <?php if ($total_pags > 1): ?>
         <div class="paginacion">
             <?php if ($pagina > 1): ?>
-                <a href="?pagina=<?= $pagina - 1 ?>" class="pag-btn">← Anterior</a>
+                <a href="?buscar=<?= urlencode($buscar) ?>&pagina=<?= $pagina - 1 ?>" class="pag-btn">← Anterior</a>
             <?php endif; ?>
-
             <?php for ($i = 1; $i <= $total_pags; $i++): ?>
-                <a href="?pagina=<?= $i ?>" class="pag-btn <?= $i === $pagina ? 'pag-activa' : '' ?>">
+                <a href="?buscar=<?= urlencode($buscar) ?>&pagina=<?= $i ?>" class="pag-btn <?= $i === $pagina ? 'pag-activa' : '' ?>">
                     <?= $i ?>
                 </a>
             <?php endfor; ?>
-
             <?php if ($pagina < $total_pags): ?>
-                <a href="?pagina=<?= $pagina + 1 ?>" class="pag-btn">Siguiente →</a>
+                <a href="?buscar=<?= urlencode($buscar) ?>&pagina=<?= $pagina + 1 ?>" class="pag-btn">Siguiente →</a>
             <?php endif; ?>
         </div>
         <p class="pag-info">Mostrando <?= count($usuarios) ?> de <?= $total ?> usuarios — Página <?= $pagina ?> de <?= $total_pags ?></p>

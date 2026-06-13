@@ -35,6 +35,8 @@ $filtro_estado = isset($_GET['estado']) ? $_GET['estado'] : '';
 $cursos = $pdo->query("SELECT id, nombre FROM cursos WHERE estado = 'activo' ORDER BY nombre")->fetchAll();
 
 // Construir consulta con filtros
+$buscar = isset($_GET['buscar']) ? trim($_GET['buscar']) : '';
+
 $where  = [];
 $params = [];
 
@@ -45,6 +47,11 @@ if ($filtro_curso) {
 if ($filtro_estado) {
     $where[]  = 'm.estado = ?';
     $params[] = $filtro_estado;
+}
+if ($buscar) {
+    $where[]  = "(u.nombre LIKE ? OR u.apellido LIKE ? OR u.email LIKE ? OR c.nombre LIKE ?)";
+    $termino  = "%$buscar%";
+    $params   = array_merge($params, [$termino, $termino, $termino, $termino]);
 }
 
 $sql = "SELECT m.id, m.fecha, m.estado,
@@ -95,6 +102,11 @@ $matriculas = $stmt->fetchAll();
     <!-- Filtros -->
     <div class="form-card" style="margin-bottom:1.5rem;">
         <form method="GET" style="display:flex; gap:1rem; flex-wrap:wrap; align-items:flex-end;">
+            <div style="flex:2; min-width:200px;">
+                <label>Buscar</label>
+                <input type="text" name="buscar" value="<?= htmlspecialchars($buscar) ?>"
+                    placeholder="🔍 Estudiante, correo o curso...">
+            </div>
             <div style="flex:1; min-width:200px;">
                 <label>Curso</label>
                 <select name="curso_id">
@@ -110,9 +122,9 @@ $matriculas = $stmt->fetchAll();
                 <label>Estado</label>
                 <select name="estado">
                     <option value="">Todos</option>
-                    <option value="pendiente"   <?= $filtro_estado === 'pendiente'   ? 'selected' : '' ?>>Pendiente</option>
-                    <option value="confirmada"  <?= $filtro_estado === 'confirmada'  ? 'selected' : '' ?>>Confirmada</option>
-                    <option value="anulada"     <?= $filtro_estado === 'anulada'     ? 'selected' : '' ?>>Anulada</option>
+                    <option value="pendiente"  <?= $filtro_estado === 'pendiente'  ? 'selected' : '' ?>>Pendiente</option>
+                    <option value="confirmada" <?= $filtro_estado === 'confirmada' ? 'selected' : '' ?>>Confirmada</option>
+                    <option value="anulada"    <?= $filtro_estado === 'anulada'    ? 'selected' : '' ?>>Anulada</option>
                 </select>
             </div>
             <div>
@@ -195,32 +207,31 @@ $matriculas = $stmt->fetchAll();
             </table>
         </div>
     <?php endif; ?>
+
+    <?php if ($total_pags > 1): ?>
+        <div class="paginacion">
+            <?php
+            $query = http_build_query(array_filter([
+                'buscar'   => $buscar,
+                'curso_id' => $filtro_curso,
+                'estado'   => $filtro_estado
+            ]));
+            ?>
+            <?php if ($pagina > 1): ?>
+                <a href="?<?= $query ?>&pagina=<?= $pagina - 1 ?>" class="pag-btn">← Anterior</a>
+            <?php endif; ?>
+            <?php for ($i = 1; $i <= $total_pags; $i++): ?>
+                <a href="?<?= $query ?>&pagina=<?= $i ?>" class="pag-btn <?= $i === $pagina ? 'pag-activa' : '' ?>">
+                    <?= $i ?>
+                </a>
+            <?php endfor; ?>
+            <?php if ($pagina < $total_pags): ?>
+                <a href="?<?= $query ?>&pagina=<?= $pagina + 1 ?>" class="pag-btn">Siguiente →</a>
+            <?php endif; ?>
+        </div>
+        <p class="pag-info">Mostrando <?= count($matriculas) ?> de <?= $total ?> matrículas — Página <?= $pagina ?> de <?= $total_pags ?></p>
+    <?php endif; ?>
+
 </div>
-
-<?php if ($total_pags > 1): ?>
-    <div class="paginacion">
-        <?php
-        // Preservar filtros en la paginación
-        $query = http_build_query(array_filter([
-            'curso_id' => $filtro_curso,
-            'estado'   => $filtro_estado
-        ]));
-        ?>
-        <?php if ($pagina > 1): ?>
-            <a href="?<?= $query ?>&pagina=<?= $pagina - 1 ?>" class="pag-btn">← Anterior</a>
-        <?php endif; ?>
-
-        <?php for ($i = 1; $i <= $total_pags; $i++): ?>
-            <a href="?<?= $query ?>&pagina=<?= $i ?>" class="pag-btn <?= $i === $pagina ? 'pag-activa' : '' ?>">
-                <?= $i ?>
-            </a>
-        <?php endfor; ?>
-
-        <?php if ($pagina < $total_pags): ?>
-            <a href="?<?= $query ?>&pagina=<?= $pagina + 1 ?>" class="pag-btn">Siguiente →</a>
-        <?php endif; ?>
-    </div>
-    <p class="pag-info">Mostrando <?= count($matriculas) ?> de <?= $total ?> matrículas — Página <?= $pagina ?> de <?= $total_pags ?></p>
-<?php endif; ?>
 
 <?php include '../../includes/footer.php'; ?>

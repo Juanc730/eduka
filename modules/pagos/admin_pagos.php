@@ -30,21 +30,40 @@ if (isset($_GET['accion']) && isset($_GET['pago_id'])) {
     exit;
 }
 
-$total      = $pdo->query("SELECT COUNT(*) FROM pagos")->fetchColumn();
+// Buscador y paginación
+$buscar     = isset($_GET['buscar']) ? trim($_GET['buscar']) : '';
+$where      = [];
+$params     = [];
+
+if ($buscar) {
+    $where[]  = "(u.nombre LIKE ? OR u.apellido LIKE ? OR c.nombre LIKE ? OR p.estado LIKE ?)";
+    $termino  = "%$buscar%";
+    $params   = [$termino, $termino, $termino, $termino];
+}
+
+$sql_base = "FROM pagos p
+             JOIN matriculas m ON p.matricula_id = m.id
+             JOIN usuarios u ON m.estudiante_id = u.id
+             JOIN cursos c ON m.curso_id = c.id"
+          . ($where ? ' WHERE ' . implode(' AND ', $where) : '');
+
+$total_stmt = $pdo->prepare("SELECT COUNT(*) $sql_base");
+$total_stmt->execute($params);
+$total      = $total_stmt->fetchColumn();
+
 $por_pagina = 10;
 $pagina     = isset($_GET['pagina']) ? max(1, (int)$_GET['pagina']) : 1;
 $offset     = ($pagina - 1) * $por_pagina;
 $total_pags = ceil($total / $por_pagina);
 
-$pagos = $pdo->query("SELECT p., 
-                             CONCAT(u.nombre, ' ', u.apellido) AS estudiante,
-                             c.nombre AS curso
-                      FROM pagos p
-                      JOIN matriculas m ON p.matricula_id = m.id
-                      JOIN usuarios u ON m.estudiante_id = u.id
-                      JOIN cursos c ON m.curso_id = c.id
-                      ORDER BY p.estado ASC, p.fecha DESC
-                      LIMIT $por_pagina OFFSET $offset")->fetchAll();
+$stmt = $pdo->prepare("SELECT p.*,
+                              CONCAT(u.nombre, ' ', u.apellido) AS estudiante,
+                              c.nombre AS curso
+                       $sql_base
+                       ORDER BY p.estado ASC, p.fecha DESC
+                       LIMIT $por_pagina OFFSET $offset");
+$stmt->execute($params);
+$pagos = $stmt->fetchAll();
 ?>
 
 <?php include '../../includes/navbar.php'; ?>
@@ -55,8 +74,24 @@ $pagos = $pdo->query("SELECT p.,
         <a href="/eduka/modules/pagos/cargar_yape.php" class="btn-primary">+ Cargar códigos Yape</a>
     </div>
 
+    <!-- Buscador -->
+    <form method="GET" class="buscador-container">
+        <input type="text" name="buscar" value="<?= htmlspecialchars($buscar) ?>"
+               placeholder="🔍 Buscar por estudiante, curso o estado..." class="buscador-input">
+        <button type="submit" class="btn-primary">Buscar</button>
+        <?php if ($buscar): ?>
+            <a href="/eduka/modules/pagos/admin_pagos.php" class="btn-secondary">Limpiar</a>
+        <?php endif; ?>
+    </form>
+
+    <?php if ($buscar): ?>
+        <p class="buscador-contador" style="margin-bottom:1rem;">
+            <?= $total ?> resultado(s) para "<strong><?= htmlspecialchars($buscar) ?></strong>"
+        </p>
+    <?php endif; ?>
+
     <?php if (empty($pagos)): ?>
-        <p>No hay pagos registrados.</p>
+        <p>No hay pagos que coincidan con la búsqueda.</p>
     <?php else: ?>
         <div class="table-container">
             <table class="tabla">
@@ -106,25 +141,24 @@ $pagos = $pdo->query("SELECT p.,
             </table>
         </div>
     <?php endif; ?>
+
+    <?php if ($total_pags > 1): ?>
+        <div class="paginacion">
+            <?php if ($pagina > 1): ?>
+                <a href="?buscar=<?= urlencode($buscar) ?>&pagina=<?= $pagina - 1 ?>" class="pag-btn">← Anterior</a>
+            <?php endif; ?>
+            <?php for ($i = 1; $i <= $total_pags; $i++): ?>
+                <a href="?buscar=<?= urlencode($buscar) ?>&pagina=<?= $i ?>" class="pag-btn <?= $i === $pagina ? 'pag-activa' : '' ?>">
+                    <?= $i ?>
+                </a>
+            <?php endfor; ?>
+            <?php if ($pagina < $total_pags): ?>
+                <a href="?buscar=<?= urlencode($buscar) ?>&pagina=<?= $pagina + 1 ?>" class="pag-btn">Siguiente →</a>
+            <?php endif; ?>
+        </div>
+        <p class="pag-info">Mostrando <?= count($pagos) ?> de <?= $total ?> pagos — Página <?= $pagina ?> de <?= $total_pags ?></p>
+    <?php endif; ?>
+
 </div>
-
-<?php if ($total_pags > 1): ?>
-    <div class="paginacion">
-        <?php if ($pagina > 1): ?>
-            <a href="?pagina=<?= $pagina - 1 ?>" class="pag-btn">← Anterior</a>
-        <?php endif; ?>
-
-        <?php for ($i = 1; $i <= $total_pags; $i++): ?>
-            <a href="?pagina=<?= $i ?>" class="pag-btn <?= $i === $pagina ? 'pag-activa' : '' ?>">
-                <?= $i ?>
-            </a>
-        <?php endfor; ?>
-
-        <?php if ($pagina < $total_pags): ?>
-            <a href="?pagina=<?= $pagina + 1 ?>" class="pag-btn">Siguiente →</a>
-        <?php endif; ?>
-    </div>
-    <p class="pag-info">Mostrando <?= count($pagos) ?> de <?= $total ?> pagos — Página <?= $pagina ?> de <?= $total_pags ?></p>
-<?php endif; ?>
 
 <?php include '../../includes/footer.php'; ?>
