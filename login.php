@@ -1,16 +1,31 @@
 <?php
 $page_title = 'Iniciar Sesión';
 require_once 'includes/header.php';
+require_once 'config/database.php';
 
 if (isset($_SESSION['usuario_id'])) {
     header('Location: /eduka/index.php');
     exit;
 }
 
-$error = '';
+$error  = '';
+$bloqueado = false;
+$ip     = $_SERVER['REMOTE_ADDR'];
+$limite = 5;     // máximo de intentos
+$tiempo = 10;    // minutos de bloqueo
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    require_once 'config/database.php';
+// Verificar si la IP está bloqueada
+$stmt = $pdo->prepare("SELECT COUNT(*) AS intentos FROM login_intentos 
+                       WHERE ip = ? AND fecha > DATE_SUB(NOW(), INTERVAL ? MINUTE)");
+$stmt->execute([$ip, $tiempo]);
+$resultado = $stmt->fetch();
+
+if ($resultado['intentos'] >= $limite) {
+    $bloqueado = true;
+    $error = "Demasiados intentos fallidos. Por favor espera $tiempo minutos e intenta nuevamente.";
+}
+
+if (!$bloqueado && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $email    = trim($_POST['email']);
     $password = $_POST['password'];
 
@@ -25,13 +40,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $usuario = $stmt->fetch();
 
         if ($usuario && password_verify($password, $usuario['password'])) {
+            // Login exitoso: limpiar intentos de esa IP
+            $pdo->prepare("DELETE FROM login_intentos WHERE ip = ?")->execute([$ip]);
+
             $_SESSION['usuario_id'] = $usuario['id'];
             $_SESSION['nombre']     = $usuario['nombre'];
             $_SESSION['rol']        = $usuario['rol'];
             header('Location: /eduka/index.php');
             exit;
         } else {
-            $error = 'Correo o contraseña incorrectos.';
+            // Registrar intento fallido
+            $pdo->prepare("INSERT INTO login_intentos (email, ip) VALUES (?, ?)")->execute([$email, $ip]);
+
+            // Contar intentos restantes
+            $stmt = $pdo->prepare("SELECT COUNT(*) AS intentos FROM login_intentos 
+                                   WHERE ip = ? AND fecha > DATE_SUB(NOW(), INTERVAL ? MINUTE)");
+            $stmt->execute([$ip, $tiempo]);
+            $intentos = $stmt->fetch()['intentos'];
+            $restantes = $limite - $intentos;
+
+            if ($restantes <= 0) {
+                $bloqueado = true;
+                $error = "Demasiados intentos fallidos. Por favor espera $tiempo minutos e intenta nuevamente.";
+            } else {
+                $error = "Correo o contraseña incorrectos. Te quedan $restantes intento(s).";
+            }
         }
     }
 }
@@ -46,14 +79,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php if (isset($_GET['error'])): ?>
             <p class="error"><?= htmlspecialchars($_GET['error']) ?></p>
         <?php endif; ?>
+
         <?php if ($error): ?>
-            <p class="error"><?= htmlspecialchars($error) ?></p>
+            <p class="<?= $bloqueado ? 'error-bloqueo' : 'error' ?>"><?= htmlspecialchars($error) ?></p>
         <?php endif; ?>
 
+        <?php if (!$bloqueado): ?>
         <form method="POST" id="form-login" novalidate>
             <label>Correo electrónico</label>
-            <input type="email" name="email" id="email" 
-                   value="<?= htmlspecialchars($_POST['email'] ?? '') ?>" 
+            <input type="email" name="email" id="email"
+                   value="<?= htmlspecialchars($_POST['email'] ?? '') ?>"
                    placeholder="tucorreo@ejemplo.com">
             <p class="campo-error" id="error-email"></p>
 
@@ -70,6 +105,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 Ingresar
             </button>
         </form>
+        <?php else: ?>
+            <div class="bloqueo-timer">
+                🔒 Acceso bloqueado temporalmente
+            </div>
+        <?php endif; ?>
+
         <p>¿No tienes cuenta? <a href="/eduka/modules/auth/registro.php">Regístrate aquí</a></p>
     </div>
 </div>
@@ -87,48 +128,47 @@ function togglePassword(inputId, iconId) {
     }
 }
 
-document.getElementById('form-login').addEventListener('submit', function (e) {
-    let valido = true;
+const formLogin = document.getElementById('form-login');
+if (formLogin) {
+    formLogin.addEventListener('submit', function (e) {
+        let valido = true;
 
-    const email    = document.getElementById('email');
-    const password = document.getElementById('password');
-    const errorEmail    = document.getElementById('error-email');
-    const errorPassword = document.getElementById('error-password');
+        const email    = document.getElementById('email');
+        const password = document.getElementById('password');
+        const errorEmail    = document.getElementById('error-email');
+        const errorPassword = document.getElementById('error-password');
 
-    // Limpiar errores previos
-    errorEmail.textContent    = '';
-    errorPassword.textContent = '';
-    email.classList.remove('input-error');
-    password.closest('.input-password').classList.remove('input-error');
+        errorEmail.textContent    = '';
+        errorPassword.textContent = '';
+        email.classList.remove('input-error');
+        password.closest('.input-password').classList.remove('input-error');
 
-    // Validar email
-    if (email.value.trim() === '') {
-        errorEmail.textContent = 'El correo es obligatorio.';
-        email.classList.add('input-error');
-        valido = false;
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim())) {
-        errorEmail.textContent = 'Ingresa un correo válido.';
-        email.classList.add('input-error');
-        valido = false;
-    }
+        if (email.value.trim() === '') {
+            errorEmail.textContent = 'El correo es obligatorio.';
+            email.classList.add('input-error');
+            valido = false;
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim())) {
+            errorEmail.textContent = 'Ingresa un correo válido.';
+            email.classList.add('input-error');
+            valido = false;
+        }
 
-    // Validar password
-    if (password.value === '') {
-        errorPassword.textContent = 'La contraseña es obligatoria.';
-        password.closest('.input-password').classList.add('input-error');
-        valido = false;
-    }
+        if (password.value === '') {
+            errorPassword.textContent = 'La contraseña es obligatoria.';
+            password.closest('.input-password').classList.add('input-error');
+            valido = false;
+        }
 
-    if (!valido) {
-        e.preventDefault();
-        return;
-    }
+        if (!valido) {
+            e.preventDefault();
+            return;
+        }
 
-    // Indicador de carga
-    const btn = document.getElementById('btn-login');
-    btn.textContent = 'Verificando...';
-    btn.disabled    = true;
-});
+        const btn = document.getElementById('btn-login');
+        btn.textContent = 'Verificando...';
+        btn.disabled    = true;
+    });
+}
 </script>
 
 <?php include 'includes/footer.php'; ?>
