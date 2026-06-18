@@ -41,7 +41,7 @@ async function apiFetch(endpoint, options = {}) {
 
     if (response.status === 401 && !esLogin) {
         eliminarToken();
-        window.location.href = '/eduka/frontend/pages/login.html';
+        window.location.href = '../pages/login.html';
         return { status: response.status, data };
     }
 

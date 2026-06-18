@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Crear Cuenta — Instituto Eduka</title>
-    <link rel="stylesheet" href="/eduka/frontend/assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/style.css">
 </head>
 <body>
 
@@ -56,11 +56,11 @@
 
             <button type="submit" class="btn-primary" style="margin-top:1rem; width:100%;">Registrarse</button>
         </form>
-        <p>¿Ya tienes cuenta? <a href="/eduka/frontend/pages/login.html">Inicia sesión</a></p>
+        <p>¿Ya tienes cuenta? <a href="login.html">Inicia sesión</a></p>
     </div>
 </div>
 
-<script src="/eduka/frontend/assets/js/api.js"></script>
+<script src="../assets/js/api.js"></script>
 <script>
 function togglePassword(inputId, iconId) {
     const input = document.getElementById(inputId);
@@ -137,7 +137,7 @@ document.getElementById('form-registro').addEventListener('submit', async functi
         mensajeSuccess.textContent = data.message + ' Redirigiendo al login...';
         mensajeSuccess.style.display = 'block';
         setTimeout(() => {
-            window.location.href = '/eduka/frontend/pages/login.html';
+            window.location.href = 'login.html';
         }, 2000);
     } else {
         mensajeError.textContent = data.error;

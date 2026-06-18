@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Iniciar Sesión — Instituto Eduka</title>
-    <link rel="stylesheet" href="/eduka/frontend/assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/style.css">
 </head>
 <body>
 
@@ -36,15 +36,15 @@
                 Ingresar
             </button>
         </form>
-        <p>¿No tienes cuenta? <a href="/eduka/frontend/pages/registro.html">Regístrate aquí</a></p>
+        <p>¿No tienes cuenta? <a href="registro.html">Regístrate aquí</a></p>
     </div>
 </div>
 
-<script src="/eduka/frontend/assets/js/api.js"></script>
+<script src="../assets/js/api.js"></script>
 <script>
 // Si ya está logueado, redirigir al dashboard
 if (estaAutenticado()) {
-    window.location.href = '/eduka/frontend/pages/dashboard.html';
+    window.location.href = 'dashboard.html';
 }
 
 function togglePassword() {
@@ -101,7 +101,7 @@ document.getElementById('form-login').addEventListener('submit', async function 
     if (data.success) {
         guardarToken(data.data.token);
         localStorage.setItem('eduka_usuario', JSON.stringify(data.data.usuario));
-        window.location.href = '/eduka/frontend/pages/dashboard.html';
+        window.location.href = 'dashboard.html';
     } else {
         mensajeError.textContent = data.error;
         mensajeError.style.display = 'block';

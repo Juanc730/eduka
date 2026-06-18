@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard — Instituto Eduka</title>
-    <link rel="stylesheet" href="/eduka/frontend/assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/style.css">
 </head>
 <body>
 
@@ -30,10 +30,10 @@
     </div>
 </div>
 
-<script src="/eduka/frontend/assets/js/api.js"></script>
+<script src="../assets/js/api.js"></script>
 <script>
 if (!estaAutenticado()) {
-    window.location.href = '/eduka/frontend/pages/login.html';
+    window.location.href = 'login.html';
 }
 
 async function inicializar() {
@@ -41,7 +41,7 @@ async function inicializar() {
 
     if (!data.success) {
         eliminarToken();
-        window.location.href = '/eduka/frontend/pages/login.html';
+        window.location.href = 'login.html';
         return;
     }
 
@@ -75,7 +75,7 @@ document.getElementById('btn-logout').addEventListener('click', function (e) {
     if (confirm('¿Estás seguro que deseas cerrar sesión?')) {
         eliminarToken();
         localStorage.removeItem('eduka_usuario');
-        window.location.href = '/eduka/frontend/pages/login.html';
+        window.location.href = 'login.html';
     }
 });
 
