@@ -217,7 +217,7 @@ jobs:
         run: |
           php -S 0.0.0.0:8000 -t . > php-server.log 2>&1 &
           sleep 3
-          curl -sf http://localhost:8000 || (cat php-server.log && exit 1)
+          curl -sf http://localhost:8000/frontend/pages/login.html || (cat php-server.log && exit 1)
 
       - name: Instalar Node
         uses: actions/setup-node@v4
