@@ -16,4 +16,3 @@ tests/cypress/screenshots/
 
 # Otros
 .env
-package-lock.json
