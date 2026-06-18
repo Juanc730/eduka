@@ -1,4 +1,17 @@
-const API_BASE = 'http://localhost/eduka/backend/api';
+function calcularApiBase() {
+    const path = window.location.pathname;
+    const partes = path.split('/');
+    const indexFrontend = partes.indexOf('frontend');
+
+    if (indexFrontend === -1) {
+        return '/backend/api';
+    }
+
+    const raiz = partes.slice(0, indexFrontend).join('/');
+    return `${raiz}/backend/api`;
+}
+
+const API_BASE = calcularApiBase();
 
 function obtenerToken() {
     return localStorage.getItem('eduka_token');
@@ -35,8 +48,6 @@ async function apiFetch(endpoint, options = {}) {
 
     const data = await response.json();
 
-    // Solo redirigir automáticamente si NO es el propio endpoint de login
-    // (un 401 en login significa "credenciales incorrectas", no "sesión inválida")
     const esLogin = endpoint.includes('/auth/login.php');
 
     if (response.status === 401 && !esLogin) {
