@@ -61,13 +61,27 @@ async function inicializar() {
         `📅 ${dias[hoy.getDay()]}, ${hoy.getDate()} de ${meses[hoy.getMonth()]} de ${hoy.getFullYear()}`;
 
     // Por ahora solo un mensaje de placeholder, los módulos siguientes llenarán esto
-    document.getElementById('cards-grid').innerHTML = `
+    let cardsHtml = '';
+
+    if (usuario.rol === 'administrador') {
+        cardsHtml += `
+            <a href="usuarios.html" class="card">
+                <div class="card-icon">👥</div>
+                <h3>Usuarios</h3>
+                <p>Administrar estudiantes y docentes</p>
+            </a>
+        `;
+    }
+
+    cardsHtml += `
         <div class="card">
             <div class="card-icon">🚧</div>
             <h3>Más módulos próximamente</h3>
             <p>Seguimos migrando el resto del sistema a la nueva arquitectura.</p>
         </div>
     `;
+
+    document.getElementById('cards-grid').innerHTML = cardsHtml;
 }
 
 document.getElementById('btn-logout').addEventListener('click', function (e) {
