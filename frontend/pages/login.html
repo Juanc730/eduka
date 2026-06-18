@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión — Instituto Eduka</title>
+    <link rel="stylesheet" href="/eduka/frontend/assets/css/style.css">
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="navbar-brand">Instituto Eduka</div>
+</nav>
+
+<div class="auth-container">
+    <div class="auth-card">
+        <h2>Iniciar Sesión</h2>
+
+        <p class="error" id="mensaje-error" style="display:none;"></p>
+
+        <form id="form-login" novalidate>
+            <label>Correo electrónico</label>
+            <input type="email" id="email" placeholder="tucorreo@ejemplo.com">
+            <p class="campo-error" id="error-email"></p>
+
+            <label>Contraseña</label>
+            <div class="input-password">
+                <input type="password" id="password" placeholder="Tu contraseña">
+                <button type="button" class="toggle-pass" onclick="togglePassword()">
+                    <span id="icon-pass">👁️</span>
+                </button>
+            </div>
+            <p class="campo-error" id="error-password"></p>
+
+            <button type="submit" class="btn-primary" id="btn-login" style="margin-top:1rem; width:100%;">
+                Ingresar
+            </button>
+        </form>
+        <p>¿No tienes cuenta? <a href="/eduka/frontend/pages/registro.html">Regístrate aquí</a></p>
+    </div>
+</div>
+
+<script src="/eduka/frontend/assets/js/api.js"></script>
+<script>
+// Si ya está logueado, redirigir al dashboard
+if (estaAutenticado()) {
+    window.location.href = '/eduka/frontend/pages/dashboard.html';
+}
+
+function togglePassword() {
+    const input = document.getElementById('password');
+    const icon  = document.getElementById('icon-pass');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.textContent = '🙈';
+    } else {
+        input.type = 'password';
+        icon.textContent = '👁️';
+    }
+}
+
+document.getElementById('form-login').addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    const email    = document.getElementById('email');
+    const password = document.getElementById('password');
+    const errorEmail    = document.getElementById('error-email');
+    const errorPassword = document.getElementById('error-password');
+    const mensajeError  = document.getElementById('mensaje-error');
+
+    errorEmail.textContent    = '';
+    errorPassword.textContent = '';
+    mensajeError.style.display = 'none';
+
+    let valido = true;
+
+    if (email.value.trim() === '') {
+        errorEmail.textContent = 'El correo es obligatorio.';
+        valido = false;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim())) {
+        errorEmail.textContent = 'Ingresa un correo válido.';
+        valido = false;
+    }
+
+    if (password.value === '') {
+        errorPassword.textContent = 'La contraseña es obligatoria.';
+        valido = false;
+    }
+
+    if (!valido) return;
+
+    const btn = document.getElementById('btn-login');
+    btn.textContent = 'Verificando...';
+    btn.disabled = true;
+
+    const { status, data } = await apiPost('/auth/login.php', {
+        email: email.value.trim(),
+        password: password.value
+    });
+
+    if (data.success) {
+        guardarToken(data.data.token);
+        localStorage.setItem('eduka_usuario', JSON.stringify(data.data.usuario));
+        window.location.href = '/eduka/frontend/pages/dashboard.html';
+    } else {
+        mensajeError.textContent = data.error;
+        mensajeError.style.display = 'block';
+        btn.textContent = 'Ingresar';
+        btn.disabled = false;
+    }
+});
+</script>
+
+</body>
+</html>

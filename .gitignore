@@ -1,4 +1,19 @@
+# Dependencias
+node_modules/
+vendor/
+
+# Configuración sensible
+backend/config/database.php
+backend/config/database_test.php
+
+# Uploads
 uploads/comprobantes/*
 !uploads/comprobantes/index.php
-config/database.php
+
+# Cypress
+tests/cypress/videos/
+tests/cypress/screenshots/
+
+# Otros
 .env
+package-lock.json

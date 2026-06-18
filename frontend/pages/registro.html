@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear Cuenta — Instituto Eduka</title>
+    <link rel="stylesheet" href="/eduka/frontend/assets/css/style.css">
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="navbar-brand">Instituto Eduka</div>
+</nav>
+
+<div class="auth-container">
+    <div class="auth-card">
+        <h2>Crear Cuenta</h2>
+
+        <p class="error" id="mensaje-error" style="display:none;"></p>
+        <p class="success" id="mensaje-success" style="display:none;"></p>
+
+        <form id="form-registro">
+            <label>Nombre</label>
+            <input type="text" id="nombre" required>
+
+            <label>Apellido</label>
+            <input type="text" id="apellido" required>
+
+            <label>Correo electrónico</label>
+            <input type="email" id="email" required>
+
+            <label>Contraseña</label>
+            <div class="input-password">
+                <input type="password" id="password" required>
+                <button type="button" class="toggle-pass" onclick="togglePassword('password', 'icon-pass')">
+                    <span id="icon-pass">👁️</span>
+                </button>
+            </div>
+
+            <ul class="requisitos">
+                <li id="req-len">Mínimo 8 caracteres</li>
+                <li id="req-may">Al menos una mayúscula</li>
+                <li id="req-min">Al menos una minúscula</li>
+                <li id="req-num">Al menos un número</li>
+                <li id="req-esp">Al menos un carácter especial (@, #, $, %...)</li>
+            </ul>
+
+            <label>Confirmar contraseña</label>
+            <div class="input-password">
+                <input type="password" id="confirm_password" required>
+                <button type="button" class="toggle-pass" onclick="togglePassword('confirm_password', 'icon-confirm')">
+                    <span id="icon-confirm">👁️</span>
+                </button>
+            </div>
+            <p id="msg-confirm" style="font-size:0.85rem; margin-top:0.3rem;"></p>
+
+            <button type="submit" class="btn-primary" style="margin-top:1rem; width:100%;">Registrarse</button>
+        </form>
+        <p>¿Ya tienes cuenta? <a href="/eduka/frontend/pages/login.html">Inicia sesión</a></p>
+    </div>
+</div>
+
+<script src="/eduka/frontend/assets/js/api.js"></script>
+<script>
+function togglePassword(inputId, iconId) {
+    const input = document.getElementById(inputId);
+    const icon  = document.getElementById(iconId);
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.textContent = '🙈';
+    } else {
+        input.type = 'password';
+        icon.textContent = '👁️';
+    }
+}
+
+const passInput    = document.getElementById('password');
+const confirmInput = document.getElementById('confirm_password');
+const msgConfirm   = document.getElementById('msg-confirm');
+
+const requisitos = {
+    'req-len': /.{8,}/,
+    'req-may': /[A-Z]/,
+    'req-min': /[a-z]/,
+    'req-num': /[0-9]/,
+    'req-esp': /[\@\#\$\%\^\&\*\!\?\.\,\-\_]/
+};
+
+passInput.addEventListener('input', function () {
+    const val = this.value;
+    for (const [id, regex] of Object.entries(requisitos)) {
+        const el = document.getElementById(id);
+        if (regex.test(val)) {
+            el.classList.add('req-ok');
+            el.classList.remove('req-fail');
+        } else {
+            el.classList.add('req-fail');
+            el.classList.remove('req-ok');
+        }
+    }
+    validarConfirm();
+});
+
+confirmInput.addEventListener('input', validarConfirm);
+
+function validarConfirm() {
+    if (confirmInput.value === '') {
+        msgConfirm.textContent = '';
+        return;
+    }
+    if (passInput.value === confirmInput.value) {
+        msgConfirm.textContent = '✅ Las contraseñas coinciden';
+        msgConfirm.style.color = '#27ae60';
+    } else {
+        msgConfirm.textContent = '❌ Las contraseñas no coinciden';
+        msgConfirm.style.color = '#e74c3c';
+    }
+}
+
+document.getElementById('form-registro').addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    const mensajeError   = document.getElementById('mensaje-error');
+    const mensajeSuccess = document.getElementById('mensaje-success');
+    mensajeError.style.display   = 'none';
+    mensajeSuccess.style.display = 'none';
+
+    const { status, data } = await apiPost('/auth/registro.php', {
+        nombre: document.getElementById('nombre').value.trim(),
+        apellido: document.getElementById('apellido').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        password: passInput.value,
+        confirm_password: confirmInput.value
+    });
+
+    if (data.success) {
+        mensajeSuccess.textContent = data.message + ' Redirigiendo al login...';
+        mensajeSuccess.style.display = 'block';
+        setTimeout(() => {
+            window.location.href = '/eduka/frontend/pages/login.html';
+        }, 2000);
+    } else {
+        mensajeError.textContent = data.error;
+        mensajeError.style.display = 'block';
+    }
+});
+</script>
+
+</body>
+</html>
