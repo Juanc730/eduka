@@ -230,7 +230,7 @@ jobs:
         uses: cypress-io/github-action@v6
         with:
           working-directory: .
-          command: npx cypress run --project tests --config-file tests/cypress.config.js
+          command: npx cypress run --project tests
 
       - name: Subir capturas de pantalla si fallan las pruebas
         if: failure()
