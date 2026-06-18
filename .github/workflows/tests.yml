@@ -215,8 +215,9 @@ jobs:
 
       - name: Iniciar servidor PHP
         run: |
-          php -S 0.0.0.0:80 -t . &
-          sleep 2
+          php -S 0.0.0.0:8000 -t . > php-server.log 2>&1 &
+          sleep 3
+          curl -sf http://localhost:8000 || (cat php-server.log && exit 1)
 
       - name: Instalar Node
         uses: actions/setup-node@v4
@@ -231,6 +232,8 @@ jobs:
         with:
           working-directory: .
           command: npx cypress run --project tests
+        env:
+          CYPRESS_BASE_URL: http://localhost:8000
 
       - name: Subir capturas de pantalla si fallan las pruebas
         if: failure()
