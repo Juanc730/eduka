@@ -75,6 +75,11 @@ async function inicializar() {
                 <h3>Usuarios</h3>
                 <p>Administrar estudiantes y docentes</p>
             </a>
+            <a href="matriculas.html" class="card">
+                <div class="card-icon">📋</div>
+                <h3>Matrículas</h3>
+                <p>Ver y gestionar todas las inscripciones</p>
+            </a>
         `;
     } else if (usuario.rol === 'estudiante') {
         cardsHtml += `
@@ -82,6 +87,11 @@ async function inicializar() {
                 <div class="card-icon">📚</div>
                 <h3>Ver Cursos</h3>
                 <p>Consulta los cursos disponibles</p>
+            </a>
+            <a href="mis-matriculas.html" class="card">
+                <div class="card-icon">📋</div>
+                <h3>Mis Matrículas</h3>
+                <p>Revisa el estado de tus inscripciones</p>
             </a>
         `;
     } else if (usuario.rol === 'docente') {

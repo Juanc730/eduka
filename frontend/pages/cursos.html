@@ -134,8 +134,8 @@ async function cargarCursos() {
             `;
         } else if (rolActual === 'estudiante') {
             acciones = c.cupos_disponibles > 0
-                ? `<button class="btn-primary" disabled title="Disponible cuando el módulo de matrículas esté listo">Matricularme</button>`
-                : `<button class="btn-secondary" disabled>Sin cupos</button>`;
+            ? `<button class="btn-primary btn-matricular" data-id="${c.id}">Matricularme</button>`
+            : `<button class="btn-secondary btn-espera" data-id="${c.id}">Unirme a lista de espera</button>`;
         }
 
         return `
@@ -157,6 +157,12 @@ async function cargarCursos() {
     });
     document.querySelectorAll('.btn-eliminar').forEach(btn => {
         btn.addEventListener('click', () => eliminarCurso(btn.dataset.id));
+    });
+    document.querySelectorAll('.btn-matricular').forEach(btn => {
+    btn.addEventListener('click', () => matricularse(btn.dataset.id));
+    });
+    document.querySelectorAll('.btn-espera').forEach(btn => {
+    btn.addEventListener('click', () => unirseListaEspera(btn.dataset.id));
     });
 }
 
@@ -262,6 +268,33 @@ async function eliminarCurso(id) {
     if (data.success) {
         mostrarMensaje('success', data.message);
         cargarCursos();
+    } else {
+        mostrarMensaje('error', data.error);
+    }
+}
+
+async function matricularse(cursoId) {
+    if (!confirm('¿Confirmas tu matrícula en este curso? Después deberás registrar tu pago.')) return;
+
+    const { data } = await apiPost('/matriculas/matricular.php', { curso_id: parseInt(cursoId) });
+
+    if (data.success) {
+        mostrarMensaje('success', data.message + ' Redirigiendo a Mis Matrículas...');
+        setTimeout(() => {
+            window.location.href = 'mis-matriculas.html';
+        }, 1500);
+    } else {
+        mostrarMensaje('error', data.error);
+    }
+}
+
+async function unirseListaEspera(cursoId) {
+    if (!confirm('¿Unirte a la lista de espera de este curso?')) return;
+
+    const { data } = await apiPost('/matriculas/lista_espera.php', { curso_id: parseInt(cursoId) });
+
+    if (data.success) {
+        mostrarMensaje('success', data.message);
     } else {
         mostrarMensaje('error', data.error);
     }
