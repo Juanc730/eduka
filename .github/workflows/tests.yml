@@ -117,6 +117,17 @@ jobs:
               ip VARCHAR(45) NOT NULL,
               fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP
           );
+          CREATE TABLE cursos (
+              id INT AUTO_INCREMENT PRIMARY KEY,
+              nombre VARCHAR(150) NOT NULL,
+              descripcion TEXT,
+              docente_id INT,
+              cupos_totales INT NOT NULL,
+              cupos_disponibles INT NOT NULL,
+              horario VARCHAR(100),
+              estado ENUM('activo','inactivo') DEFAULT 'activo',
+              FOREIGN KEY (docente_id) REFERENCES usuarios(id)
+          );
           INSERT INTO roles (nombre) VALUES ('administrador'), ('estudiante'), ('docente');
           "
 
@@ -202,15 +213,28 @@ jobs:
               ip VARCHAR(45) NOT NULL,
               fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP
           );
+          CREATE TABLE cursos (
+              id INT AUTO_INCREMENT PRIMARY KEY,
+              nombre VARCHAR(150) NOT NULL,
+              descripcion TEXT,
+              docente_id INT,
+              cupos_totales INT NOT NULL,
+              cupos_disponibles INT NOT NULL,
+              horario VARCHAR(100),
+              estado ENUM('activo','inactivo') DEFAULT 'activo',
+              FOREIGN KEY (docente_id) REFERENCES usuarios(id)
+          );
           INSERT INTO roles (nombre) VALUES ('administrador'), ('estudiante'), ('docente');
           "
 
-      - name: Generar e insertar usuario admin con hash válido para PHP 8.2
+      - name: Generar e insertar usuarios de prueba con hash válido para PHP 8.2
         run: |
-          HASH=$(php -r "echo password_hash('password123', PASSWORD_DEFAULT);")
+          HASH_ADMIN=$(php -r "echo password_hash('password123', PASSWORD_DEFAULT);")
+          HASH_ESTUDIANTE=$(php -r "echo password_hash('Test1234@', PASSWORD_DEFAULT);")
           mysql -h 127.0.0.1 -u root eduka_db -e "
           INSERT INTO usuarios (nombre, apellido, email, password, rol_id) VALUES
-          ('Admin', 'Eduka', 'admin@eduka.com', '$HASH', 1);
+          ('Admin', 'Eduka', 'admin@eduka.com', '$HASH_ADMIN', 1),
+          ('Test', 'Usuario', 'test@eduka.com', '$HASH_ESTUDIANTE', 2);
           "
 
       - name: Iniciar servidor PHP

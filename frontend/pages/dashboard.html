@@ -65,10 +65,31 @@ async function inicializar() {
 
     if (usuario.rol === 'administrador') {
         cardsHtml += `
+            <a href="cursos.html" class="card">
+                <div class="card-icon">📚</div>
+                <h3>Gestión de Cursos</h3>
+                <p>Crear, editar y eliminar cursos</p>
+            </a>
             <a href="usuarios.html" class="card">
                 <div class="card-icon">👥</div>
                 <h3>Usuarios</h3>
                 <p>Administrar estudiantes y docentes</p>
+            </a>
+        `;
+    } else if (usuario.rol === 'estudiante') {
+        cardsHtml += `
+            <a href="cursos.html" class="card">
+                <div class="card-icon">📚</div>
+                <h3>Ver Cursos</h3>
+                <p>Consulta los cursos disponibles</p>
+            </a>
+        `;
+    } else if (usuario.rol === 'docente') {
+        cardsHtml += `
+            <a href="mis-cursos.html" class="card">
+                <div class="card-icon">📚</div>
+                <h3>Mis Cursos</h3>
+                <p>Consulta los cursos que tienes asignados</p>
             </a>
         `;
     }

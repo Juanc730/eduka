@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Cursos — Instituto Eduka</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="navbar-brand">Instituto Eduka</div>
+    <div class="navbar-links">
+        <span id="nombre-usuario"></span>
+        <a href="dashboard.html">Inicio</a>
+        <a href="#" id="btn-logout">Cerrar sesión</a>
+    </div>
+</nav>
+
+<div class="dashboard-container">
+    <h1 style="color:#1a3c5e; margin-bottom:1.5rem;">Mis Cursos</h1>
+
+    <div class="reporte-resumen" id="resumen" style="display:none; margin-bottom:1.5rem;"></div>
+
+    <div class="cards-grid" id="cards-cursos">
+        <p style="color:#666;">Cargando...</p>
+    </div>
+</div>
+
+<script src="../assets/js/api.js"></script>
+<script>
+if (!estaAutenticado()) {
+    window.location.href = 'login.html';
+}
+
+async function cargarUsuario() {
+    const { data } = await apiGet('/auth/me.php');
+    if (!data.success || data.data.rol !== 'docente') {
+        window.location.href = 'dashboard.html';
+        return;
+    }
+    document.getElementById('nombre-usuario').textContent = `Hola, ${data.data.nombre}`;
+}
+
+async function cargarMisCursos() {
+    const cont = document.getElementById('cards-cursos');
+    const { data } = await apiGet('/cursos/mis_cursos.php');
+
+    if (!data.success) {
+        cont.innerHTML = '<p style="color:#e74c3c;">Error al cargar tus cursos.</p>';
+        return;
+    }
+
+    const cursos = data.data.cursos;
+
+    if (cursos.length === 0) {
+        cont.innerHTML = `
+            <div class="aviso-pago">
+                <strong>📋 Sin cursos asignados.</strong> Aún no tienes cursos asignados. Contacta al administrador.
+            </div>
+        `;
+        return;
+    }
+
+    const totalEstudiantes = cursos.reduce((sum, c) => sum + parseInt(c.total_matriculas), 0);
+    const totalDisponibles = cursos.reduce((sum, c) => sum + parseInt(c.cupos_disponibles), 0);
+
+    document.getElementById('resumen').style.display = 'grid';
+    document.getElementById('resumen').innerHTML = `
+        <div class="resumen-card">
+            <span class="resumen-num">${cursos.length}</span>
+            <span class="resumen-label">Cursos asignados</span>
+        </div>
+        <div class="resumen-card">
+            <span class="resumen-num">${totalEstudiantes}</span>
+            <span class="resumen-label">Total estudiantes</span>
+        </div>
+        <div class="resumen-card">
+            <span class="resumen-num">${totalDisponibles}</span>
+            <span class="resumen-label">Cupos disponibles</span>
+        </div>
+    `;
+
+    cont.innerHTML = cursos.map(c => {
+        const porcentaje = c.cupos_totales > 0 ? (c.ocupados / c.cupos_totales) * 100 : 0;
+        const claseBarra = porcentaje >= 90 ? 'barra-roja' : (porcentaje >= 60 ? 'barra-amarilla' : 'barra-verde');
+
+        return `
+            <div class="card curso-card">
+                <h3>${escapeHtml(c.nombre)}</h3>
+                <p class="curso-desc">${escapeHtml(c.descripcion || 'Sin descripción.')}</p>
+                <div class="curso-info">
+                    <span>🕐 ${escapeHtml(c.horario)}</span>
+                    <span>👥 ${c.total_matriculas} estudiante(s) matriculado(s)</span>
+                    <span>🪑 ${c.cupos_disponibles} / ${c.cupos_totales} cupos libres</span>
+                </div>
+                <div style="margin: 0.8rem 0 0.3rem;">
+                    <div class="barra-container">
+                        <div class="barra-fill ${claseBarra}" style="width:${porcentaje}%"></div>
+                    </div>
+                    <small style="color:#666;">Ocupación: ${Math.round(porcentaje)}%</small>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+document.getElementById('btn-logout').addEventListener('click', function (e) {
+    e.preventDefault();
+    if (confirm('¿Estás seguro que deseas cerrar sesión?')) {
+        eliminarToken();
+        localStorage.removeItem('eduka_usuario');
+        window.location.href = 'login.html';
+    }
+});
+
+cargarUsuario();
+cargarMisCursos();
+</script>
+
+</body>
+</html>
