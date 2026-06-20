@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Códigos Yape — Instituto Eduka</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="navbar-brand">Instituto Eduka</div>
+    <div class="navbar-links">
+        <span id="nombre-usuario"></span>
+        <a href="dashboard.html">Inicio</a>
+        <a href="#" id="btn-logout">Cerrar sesión</a>
+    </div>
+</nav>
+
+<div class="dashboard-container">
+    <div class="page-header">
+        <h1>Códigos Yape</h1>
+        <a href="admin-pagos.html" class="btn-secondary">← Volver</a>
+    </div>
+
+    <p class="error" id="mensaje-error" style="display:none;"></p>
+    <p class="success" id="mensaje-success" style="display:none;"></p>
+
+    <div class="form-card" style="margin-bottom:2rem;">
+        <h3 style="margin-bottom:1rem;">Registrar nuevo código</h3>
+        <form id="form-yape">
+            <label>Código de operación *</label>
+            <input type="text" id="codigo" placeholder="Ej: YPE-20260601-84521" style="text-transform:uppercase;" required>
+
+            <label>Monto (S/) *</label>
+            <input type="number" id="monto" step="0.01" min="1" required>
+
+            <label>Nombre del pagador</label>
+            <input type="text" id="nombre_pagador" placeholder="Nombre completo">
+
+            <label>Teléfono Yape</label>
+            <input type="text" id="telefono_pagador" placeholder="9XXXXXXXX">
+
+            <label>Fecha y hora de operación *</label>
+            <input type="datetime-local" id="fecha_operacion" required>
+
+            <button type="submit" class="btn-primary" style="margin-top:1rem;">Registrar código</button>
+        </form>
+    </div>
+
+    <h3 style="color:#1a3c5e; margin-bottom:1rem;">Códigos registrados</h3>
+    <div class="table-container">
+        <table class="tabla">
+            <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Monto</th>
+                    <th>Pagador</th>
+                    <th>Teléfono</th>
+                    <th>Fecha operación</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody id="tabla-operaciones">
+                <tr><td colspan="6" style="text-align:center; color:#666;">Cargando...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script src="../assets/js/api.js"></script>
+<script>
+if (!estaAutenticado()) {
+    window.location.href = 'login.html';
+}
+
+async function cargarUsuario() {
+    const { data } = await apiGet('/auth/me.php');
+    if (!data.success || data.data.rol !== 'administrador') {
+        window.location.href = 'dashboard.html';
+        return;
+    }
+    document.getElementById('nombre-usuario').textContent = `Hola, ${data.data.nombre}`;
+}
+
+async function cargarOperaciones() {
+    const tabla = document.getElementById('tabla-operaciones');
+    const { data } = await apiGet('/pagos/yape_operaciones.php');
+
+    if (!data.success) {
+        tabla.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#e74c3c;">Error al cargar.</td></tr>';
+        return;
+    }
+
+    const operaciones = data.data.operaciones;
+
+    if (operaciones.length === 0) {
+        tabla.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#666;">No hay códigos registrados.</td></tr>';
+        return;
+    }
+
+    tabla.innerHTML = operaciones.map(op => `
+        <tr>
+            <td><strong>${escapeHtml(op.codigo)}</strong></td>
+            <td>S/ ${parseFloat(op.monto).toFixed(2)}</td>
+            <td>${escapeHtml(op.nombre_pagador || '—')}</td>
+            <td>${escapeHtml(op.telefono_pagador || '—')}</td>
+            <td>${new Date(op.fecha_operacion).toLocaleString('es-PE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</td>
+            <td>${op.usado == 1
+                ? '<span class="badge-inactivo">Usado</span>'
+                : '<span class="badge-activo">Disponible</span>'}
+            </td>
+        </tr>
+    `).join('');
+}
+
+document.getElementById('form-yape').addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    const { data } = await apiPost('/pagos/cargar_yape.php', {
+        codigo: document.getElementById('codigo').value.trim(),
+        monto: parseFloat(document.getElementById('monto').value),
+        nombre_pagador: document.getElementById('nombre_pagador').value.trim(),
+        telefono_pagador: document.getElementById('telefono_pagador').value.trim(),
+        fecha_operacion: document.getElementById('fecha_operacion').value
+    });
+
+    const exito = document.getElementById('mensaje-success');
+    const error = document.getElementById('mensaje-error');
+
+    if (data.success) {
+        exito.textContent = data.message;
+        exito.style.display = 'block';
+        error.style.display = 'none';
+        document.getElementById('form-yape').reset();
+        cargarOperaciones();
+    } else {
+        error.textContent = data.error;
+        error.style.display = 'block';
+        exito.style.display = 'none';
+    }
+});
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+document.getElementById('btn-logout').addEventListener('click', function (e) {
+    e.preventDefault();
+    if (confirm('¿Estás seguro que deseas cerrar sesión?')) {
+        eliminarToken();
+        localStorage.removeItem('eduka_usuario');
+        window.location.href = 'login.html';
+    }
+});
+
+cargarUsuario();
+cargarOperaciones();
+</script>
+
+</body>
+</html>

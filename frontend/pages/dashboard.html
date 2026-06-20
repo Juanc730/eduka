@@ -60,7 +60,7 @@ async function inicializar() {
     document.getElementById('fecha-hoy').textContent =
         `📅 ${dias[hoy.getDay()]}, ${hoy.getDate()} de ${meses[hoy.getMonth()]} de ${hoy.getFullYear()}`;
 
-    // Por ahora solo un mensaje de placeholder, los módulos siguientes llenarán esto
+    // Cards de cada modulo
     let cardsHtml = '';
 
     if (usuario.rol === 'administrador') {
@@ -80,6 +80,11 @@ async function inicializar() {
                 <h3>Matrículas</h3>
                 <p>Ver y gestionar todas las inscripciones</p>
             </a>
+            <a href="admin-pagos.html" class="card">
+                <div class="card-icon">💳</div>
+                <h3>Pagos</h3>
+                <p>Aprobar o rechazar comprobantes</p>
+            </a>
         `;
     } else if (usuario.rol === 'estudiante') {
         cardsHtml += `
@@ -92,6 +97,11 @@ async function inicializar() {
                 <div class="card-icon">📋</div>
                 <h3>Mis Matrículas</h3>
                 <p>Revisa el estado de tus inscripciones</p>
+            </a>
+            <a href="mis-pagos.html" class="card">
+                <div class="card-icon">💳</div>
+                <h3>Mis Pagos</h3>
+                <p>Gestiona tus comprobantes de pago</p>
             </a>
         `;
     } else if (usuario.rol === 'docente') {
@@ -108,7 +118,7 @@ async function inicializar() {
         <div class="card">
             <div class="card-icon">🚧</div>
             <h3>Más módulos próximamente</h3>
-            <p>Seguimos migrando el resto del sistema a la nueva arquitectura.</p>
+            <p>Seguimos añadiendo más modulos al sistema.</p>
         </div>
     `;
 

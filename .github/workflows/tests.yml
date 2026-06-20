@@ -145,6 +145,28 @@ jobs:
               FOREIGN KEY (estudiante_id) REFERENCES usuarios(id),
               FOREIGN KEY (curso_id) REFERENCES cursos(id)
           );
+          CREATE TABLE pagos (
+              id INT AUTO_INCREMENT PRIMARY KEY,
+              matricula_id INT NOT NULL,
+              monto DECIMAL(10,2) NOT NULL,
+              metodo VARCHAR(50) DEFAULT 'Yape',
+              codigo_yape VARCHAR(50) NULL,
+              metodo_verificacion ENUM('codigo','comprobante') DEFAULT 'comprobante',
+              comprobante VARCHAR(255),
+              estado ENUM('pendiente','aprobado','rechazado') DEFAULT 'pendiente',
+              fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              FOREIGN KEY (matricula_id) REFERENCES matriculas(id)
+          );
+          CREATE TABLE yape_operaciones (
+              id INT AUTO_INCREMENT PRIMARY KEY,
+              codigo VARCHAR(50) NOT NULL UNIQUE,
+              monto DECIMAL(10,2) NOT NULL,
+              nombre_pagador VARCHAR(150),
+              telefono_pagador VARCHAR(20),
+              usado TINYINT(1) DEFAULT 0,
+              fecha_operacion DATETIME NOT NULL,
+              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          );
           INSERT INTO roles (nombre) VALUES ('administrador'), ('estudiante'), ('docente');
           "
 
@@ -270,6 +292,16 @@ jobs:
               fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
               FOREIGN KEY (matricula_id) REFERENCES matriculas(id)
           );
+          CREATE TABLE yape_operaciones (
+              id INT AUTO_INCREMENT PRIMARY KEY,
+              codigo VARCHAR(50) NOT NULL UNIQUE,
+              monto DECIMAL(10,2) NOT NULL,
+              nombre_pagador VARCHAR(150),
+              telefono_pagador VARCHAR(20),
+              usado TINYINT(1) DEFAULT 0,
+              fecha_operacion DATETIME NOT NULL,
+              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          );
           INSERT INTO roles (nombre) VALUES ('administrador'), ('estudiante'), ('docente');
           "
 
@@ -282,6 +314,9 @@ jobs:
           ('Admin', 'Eduka', 'admin@eduka.com', '$HASH_ADMIN', 1),
           ('Test', 'Usuario', 'test@eduka.com', '$HASH_ESTUDIANTE', 2);
           "
+      
+      - name: Crear carpeta de uploads
+        run: mkdir -p uploads/comprobantes
 
       - name: Iniciar servidor PHP
         run: |

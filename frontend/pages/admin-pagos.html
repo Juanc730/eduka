@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Pagos — Instituto Eduka</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="navbar-brand">Instituto Eduka</div>
+    <div class="navbar-links">
+        <span id="nombre-usuario"></span>
+        <a href="dashboard.html">Inicio</a>
+        <a href="#" id="btn-logout">Cerrar sesión</a>
+    </div>
+</nav>
+
+<div class="dashboard-container">
+    <div class="page-header">
+        <h1>Gestión de Pagos</h1>
+        <a href="cargar-yape.html" class="btn-primary">+ Cargar códigos Yape</a>
+    </div>
+
+    <p class="success" id="mensaje-success" style="display:none;"></p>
+    <p class="error" id="mensaje-error" style="display:none;"></p>
+
+    <form id="form-buscar" class="buscador-container">
+        <input type="text" id="buscar" placeholder="🔍 Buscar por estudiante, curso o estado..." class="buscador-input">
+        <button type="submit" class="btn-primary">Buscar</button>
+        <button type="button" id="btn-limpiar" class="btn-secondary" style="display:none;">Limpiar</button>
+    </form>
+
+    <div class="table-container">
+        <table class="tabla">
+            <thead>
+                <tr>
+                    <th>Estudiante</th>
+                    <th>Curso</th>
+                    <th>Monto</th>
+                    <th>Verificación</th>
+                    <th>Estado</th>
+                    <th>Fecha</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="tabla-pagos">
+                <tr><td colspan="7" style="text-align:center; color:#666;">Cargando...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="paginacion" id="paginacion"></div>
+    <p class="pag-info" id="pag-info"></p>
+</div>
+
+<script src="../assets/js/api.js"></script>
+<script>
+if (!estaAutenticado()) {
+    window.location.href = 'login.html';
+}
+
+let paginaActual = 1;
+let buscarActual = '';
+
+async function cargarUsuario() {
+    const { data } = await apiGet('/auth/me.php');
+    if (!data.success || data.data.rol !== 'administrador') {
+        window.location.href = 'dashboard.html';
+        return;
+    }
+    document.getElementById('nombre-usuario').textContent = `Hola, ${data.data.nombre}`;
+}
+
+async function cargarPagos() {
+    const tabla = document.getElementById('tabla-pagos');
+    tabla.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#666;">Cargando...</td></tr>';
+
+    const params = new URLSearchParams({ pagina: paginaActual });
+    if (buscarActual) params.set('buscar', buscarActual);
+
+    const { data } = await apiGet(`/pagos/listar.php?${params.toString()}`);
+
+    if (!data.success) {
+        tabla.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#e74c3c;">Error al cargar pagos.</td></tr>';
+        return;
+    }
+
+    const { pagos, total, pagina, total_pags } = data.data;
+
+    if (pagos.length === 0) {
+        tabla.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#666;">No hay pagos que coincidan.</td></tr>';
+    } else {
+        tabla.innerHTML = pagos.map(p => {
+            let verificacion = '';
+            if (p.metodo_verificacion === 'codigo') {
+                verificacion = `<span class="badge-activo">Código: ${escapeHtml(p.codigo_yape)}</span>`;
+            } else if (p.comprobante) {
+                verificacion = `<a href="../../uploads/comprobantes/${p.comprobante}" target="_blank" class="btn-secondary">Ver imagen</a>`;
+            } else {
+                verificacion = '<span style="color:#aaa;">Sin archivo</span>';
+            }
+
+            let acciones = '<span style="color:#aaa;">—</span>';
+            if (p.estado === 'pendiente' && p.metodo_verificacion === 'comprobante') {
+                acciones = `
+                    <div class="btn-group">
+                        <button class="btn-primary btn-aprobar" data-id="${p.id}">Aprobar</button>
+                        <button class="btn-danger btn-rechazar" data-id="${p.id}">Rechazar</button>
+                    </div>
+                `;
+            }
+
+            return `
+                <tr>
+                    <td>${escapeHtml(p.estudiante)}</td>
+                    <td>${escapeHtml(p.curso)}</td>
+                    <td>S/ ${parseFloat(p.monto).toFixed(2)}</td>
+                    <td>${verificacion}</td>
+                    <td><span class="estado-badge estado-${p.estado}">${capitalize(p.estado)}</span></td>
+                    <td>${new Date(p.fecha).toLocaleString('es-PE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</td>
+                    <td>${acciones}</td>
+                </tr>
+            `;
+        }).join('');
+
+        document.querySelectorAll('.btn-aprobar').forEach(btn => {
+            btn.addEventListener('click', () => gestionarPago(btn.dataset.id, 'aprobar'));
+        });
+        document.querySelectorAll('.btn-rechazar').forEach(btn => {
+            btn.addEventListener('click', () => gestionarPago(btn.dataset.id, 'rechazar'));
+        });
+    }
+
+    renderizarPaginacion(pagina, total_pags);
+    document.getElementById('pag-info').textContent = total_pags > 0
+        ? `Mostrando ${pagos.length} de ${total} pagos — Página ${pagina} de ${total_pags}`
+        : '';
+}
+
+function renderizarPaginacion(pagina, totalPags) {
+    const cont = document.getElementById('paginacion');
+    if (totalPags <= 1) { cont.innerHTML = ''; return; }
+
+    let html = '';
+    if (pagina > 1) html += `<button class="pag-btn" data-pag="${pagina - 1}">← Anterior</button>`;
+    for (let i = 1; i <= totalPags; i++) {
+        html += `<button class="pag-btn ${i === pagina ? 'pag-activa' : ''}" data-pag="${i}">${i}</button>`;
+    }
+    if (pagina < totalPags) html += `<button class="pag-btn" data-pag="${pagina + 1}">Siguiente →</button>`;
+
+    cont.innerHTML = html;
+    cont.querySelectorAll('.pag-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            paginaActual = parseInt(btn.dataset.pag);
+            cargarPagos();
+        });
+    });
+}
+
+async function gestionarPago(id, accion) {
+    const texto = accion === 'aprobar' ? '¿Aprobar este pago?' : '¿Rechazar este pago?';
+    if (!confirm(texto)) return;
+
+    const { data } = await apiPut('/pagos/gestionar.php', { id: parseInt(id), accion });
+
+    if (data.success) {
+        mostrarMensaje('success', data.message);
+        cargarPagos();
+    } else {
+        mostrarMensaje('error', data.error);
+    }
+}
+
+document.getElementById('form-buscar').addEventListener('submit', function (e) {
+    e.preventDefault();
+    buscarActual = document.getElementById('buscar').value.trim();
+    paginaActual = 1;
+    document.getElementById('btn-limpiar').style.display = buscarActual ? 'inline-block' : 'none';
+    cargarPagos();
+});
+
+document.getElementById('btn-limpiar').addEventListener('click', function () {
+    document.getElementById('buscar').value = '';
+    buscarActual = '';
+    paginaActual = 1;
+    this.style.display = 'none';
+    cargarPagos();
+});
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function capitalize(text) {
+    return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+function mostrarMensaje(tipo, texto) {
+    const el = document.getElementById(`mensaje-${tipo}`);
+    el.textContent = texto;
+    el.style.display = 'block';
+    setTimeout(() => { el.style.display = 'none'; }, 4000);
+}
+
+document.getElementById('btn-logout').addEventListener('click', function (e) {
+    e.preventDefault();
+    if (confirm('¿Estás seguro que deseas cerrar sesión?')) {
+        eliminarToken();
+        localStorage.removeItem('eduka_usuario');
+        window.location.href = 'login.html';
+    }
+});
+
+cargarUsuario();
+cargarPagos();
+</script>
+
+</body>
+</html>

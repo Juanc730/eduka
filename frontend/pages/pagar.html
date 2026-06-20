@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrar Pago — Instituto Eduka</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="navbar-brand">Instituto Eduka</div>
+    <div class="navbar-links">
+        <span id="nombre-usuario"></span>
+        <a href="dashboard.html">Inicio</a>
+        <a href="#" id="btn-logout">Cerrar sesión</a>
+    </div>
+</nav>
+
+<div class="dashboard-container">
+    <div class="page-header">
+        <h1>Registrar Pago</h1>
+        <a href="mis-matriculas.html" class="btn-secondary">← Volver</a>
+    </div>
+
+    <div class="form-card" style="max-width:650px;" id="contenedor-form">
+        <h3 id="nombre-curso" style="color:#1a3c5e; margin-bottom:0.3rem;"></h3>
+        <p style="color:#666; margin-bottom:1.5rem;">Selecciona cómo deseas verificar tu pago:</p>
+
+        <p class="error" id="mensaje-error" style="display:none;"></p>
+        <div class="aviso-exito" id="mensaje-exito" style="display:none;"></div>
+
+        <div id="zona-tabs">
+            <div class="tabs">
+                <button class="tab active" id="tab-codigo-btn">📱 Código Yape</button>
+                <button class="tab" id="tab-comprobante-btn">🖼️ Subir comprobante</button>
+            </div>
+
+            <div id="tab-codigo">
+                <div class="aviso-pago" style="margin-bottom:1rem;">
+                    <strong>📱 Verificación automática:</strong> Ingresa el código de operación que aparece en tu app Yape al completar el pago. La confirmación es inmediata.
+                </div>
+                <form id="form-codigo">
+                    <label>Código de operación Yape *</label>
+                    <input type="text" id="codigo-yape" placeholder="Ej: YPE-20260601-84521" required style="text-transform:uppercase;">
+                    <label>Monto pagado (S/) *</label>
+                    <input type="number" id="monto-codigo" step="0.01" min="1" placeholder="Ej: 150.00" required>
+                    <button type="submit" class="btn-primary" style="margin-top:1rem;">Verificar y confirmar</button>
+                </form>
+            </div>
+
+            <div id="tab-comprobante" style="display:none;">
+                <div class="aviso-pago" style="margin-bottom:1rem;">
+                    <strong>🖼️ Verificación manual:</strong> Sube una captura de tu pago Yape. El administrador la revisará y confirmará tu matrícula.
+                </div>
+                <form id="form-comprobante">
+                    <label>Monto pagado (S/) *</label>
+                    <input type="number" id="monto-comprobante" step="0.01" min="1" placeholder="Ej: 150.00" required>
+                    <label>Imagen del comprobante * <small>(JPG, PNG o WEBP, máx. 5MB)</small></label>
+                    <input type="file" id="archivo-comprobante" accept=".jpg,.jpeg,.png,.webp" required>
+                    <button type="submit" class="btn-primary" style="margin-top:1rem;">Enviar comprobante</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="../assets/js/api.js"></script>
+<script>
+if (!estaAutenticado()) {
+    window.location.href = 'login.html';
+}
+
+const params = new URLSearchParams(window.location.search);
+const matriculaId = params.get('matricula_id');
+
+if (!matriculaId) {
+    window.location.href = 'mis-matriculas.html';
+}
+
+async function cargarUsuario() {
+    const { data } = await apiGet('/auth/me.php');
+    if (!data.success || data.data.rol !== 'estudiante') {
+        window.location.href = 'dashboard.html';
+        return;
+    }
+    document.getElementById('nombre-usuario').textContent = `Hola, ${data.data.nombre}`;
+}
+
+// Tabs
+document.getElementById('tab-codigo-btn').addEventListener('click', function () {
+    document.getElementById('tab-codigo').style.display = 'block';
+    document.getElementById('tab-comprobante').style.display = 'none';
+    this.classList.add('active');
+    document.getElementById('tab-comprobante-btn').classList.remove('active');
+});
+
+document.getElementById('tab-comprobante-btn').addEventListener('click', function () {
+    document.getElementById('tab-comprobante').style.display = 'block';
+    document.getElementById('tab-codigo').style.display = 'none';
+    this.classList.add('active');
+    document.getElementById('tab-codigo-btn').classList.remove('active');
+});
+
+function mostrarExito(mensaje) {
+    document.getElementById('zona-tabs').style.display = 'none';
+    const exito = document.getElementById('mensaje-exito');
+    exito.innerHTML = `✅ <strong>${mensaje}</strong><br><a href="mis-matriculas.html" class="btn-primary" style="margin-top:1rem; display:inline-block;">Ver mis matrículas</a>`;
+    exito.style.display = 'block';
+}
+
+function mostrarError(mensaje) {
+    const error = document.getElementById('mensaje-error');
+    error.textContent = mensaje;
+    error.style.display = 'block';
+    setTimeout(() => { error.style.display = 'none'; }, 5000);
+}
+
+// Formulario código Yape
+document.getElementById('form-codigo').addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    const { data } = await apiPost('/pagos/verificar_codigo.php', {
+        matricula_id: parseInt(matriculaId),
+        codigo_yape: document.getElementById('codigo-yape').value.trim(),
+        monto: parseFloat(document.getElementById('monto-codigo').value)
+    });
+
+    if (data.success) {
+        mostrarExito(data.message);
+    } else {
+        mostrarError(data.error);
+    }
+});
+
+// Formulario comprobante (usa FormData, no JSON)
+document.getElementById('form-comprobante').addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    const formData = new FormData();
+    formData.append('matricula_id', matriculaId);
+    formData.append('monto', document.getElementById('monto-comprobante').value);
+    formData.append('comprobante', document.getElementById('archivo-comprobante').files[0]);
+
+    try {
+        const response = await fetch(`${API_BASE}/pagos/subir_comprobante.php`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${obtenerToken()}`
+            },
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            mostrarExito(data.message);
+        } else {
+            mostrarError(data.error);
+        }
+    } catch (err) {
+        mostrarError('Error al enviar el comprobante. Intenta nuevamente.');
+    }
+});
+
+document.getElementById('btn-logout').addEventListener('click', function (e) {
+    e.preventDefault();
+    if (confirm('¿Estás seguro que deseas cerrar sesión?')) {
+        eliminarToken();
+        localStorage.removeItem('eduka_usuario');
+        window.location.href = 'login.html';
+    }
+});
+
+cargarUsuario();
+</script>
+
+</body>
+</html>

@@ -32,6 +32,7 @@
                     <th>Docente</th>
                     <th>Estado Matrícula</th>
                     <th>Estado Pago</th>
+                    <th>Acción</th>
                 </tr>
             </thead>
             <tbody id="tabla-matriculas">
@@ -74,6 +75,14 @@ async function cargarMatriculas() {
 
     tabla.innerHTML = matriculas.map(m => {
         const docente = m.docente_nombre ? `${m.docente_nombre} ${m.docente_apellido}` : 'Sin asignar';
+        let accion = '<span style="color:#aaa;">—</span>';
+
+        if (!m.pago_id) {
+            accion = `<a href="pagar.html?matricula_id=${m.id}" class="btn-primary">Registrar pago</a>`;
+        } else if (m.pago_estado === 'rechazado') {
+            accion = `<a href="pagar.html?matricula_id=${m.id}" class="btn-primary">Reintentar</a>`;
+        }
+
         return `
             <tr>
                 <td>${escapeHtml(m.curso)}</td>
@@ -84,6 +93,7 @@ async function cargarMatriculas() {
                     ? `<span class="estado-badge estado-${m.pago_estado}">${capitalize(m.pago_estado)}</span>`
                     : '<span class="estado-badge estado-pendiente">Sin pago</span>'}
                 </td>
+                <td>${accion}</td>
             </tr>
         `;
     }).join('');

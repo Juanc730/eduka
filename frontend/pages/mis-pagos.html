@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Pagos — Instituto Eduka</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="navbar-brand">Instituto Eduka</div>
+    <div class="navbar-links">
+        <span id="nombre-usuario"></span>
+        <a href="dashboard.html">Inicio</a>
+        <a href="#" id="btn-logout">Cerrar sesión</a>
+    </div>
+</nav>
+
+<div class="dashboard-container">
+    <h1 style="color:#1a3c5e; margin-bottom:1.5rem;">Mis Pagos</h1>
+
+    <div class="table-container">
+        <table class="tabla">
+            <thead>
+                <tr>
+                    <th>Curso</th>
+                    <th>Monto</th>
+                    <th>Método</th>
+                    <th>Verificación</th>
+                    <th>Estado</th>
+                    <th>Fecha</th>
+                </tr>
+            </thead>
+            <tbody id="tabla-pagos">
+                <tr><td colspan="6" style="text-align:center; color:#666;">Cargando...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script src="../assets/js/api.js"></script>
+<script>
+if (!estaAutenticado()) {
+    window.location.href = 'login.html';
+}
+
+async function cargarUsuario() {
+    const { data } = await apiGet('/auth/me.php');
+    if (!data.success || data.data.rol !== 'estudiante') {
+        window.location.href = 'dashboard.html';
+        return;
+    }
+    document.getElementById('nombre-usuario').textContent = `Hola, ${data.data.nombre}`;
+}
+
+async function cargarPagos() {
+    const tabla = document.getElementById('tabla-pagos');
+    const { data } = await apiGet('/pagos/mis_pagos.php');
+
+    if (!data.success) {
+        tabla.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#e74c3c;">Error al cargar tus pagos.</td></tr>';
+        return;
+    }
+
+    const pagos = data.data.pagos;
+
+    if (pagos.length === 0) {
+        tabla.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#666;">No tienes pagos registrados.</td></tr>';
+        return;
+    }
+
+    tabla.innerHTML = pagos.map(p => `
+        <tr>
+            <td>${escapeHtml(p.curso)}</td>
+            <td>S/ ${parseFloat(p.monto).toFixed(2)}</td>
+            <td>${escapeHtml(p.metodo)}</td>
+            <td>${p.metodo_verificacion === 'codigo'
+                ? '<span class="badge-activo">Código Yape</span>'
+                : '<span class="estado-badge estado-pendiente">Comprobante</span>'}
+            </td>
+            <td><span class="estado-badge estado-${p.estado}">${capitalize(p.estado)}</span></td>
+            <td>${new Date(p.fecha).toLocaleString('es-PE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</td>
+        </tr>
+    `).join('');
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function capitalize(text) {
+    return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+document.getElementById('btn-logout').addEventListener('click', function (e) {
+    e.preventDefault();
+    if (confirm('¿Estás seguro que deseas cerrar sesión?')) {
+        eliminarToken();
+        localStorage.removeItem('eduka_usuario');
+        window.location.href = 'login.html';
+    }
+});
+
+cargarUsuario();
+cargarPagos();
+</script>
+
+</body>
+</html>
