@@ -26,12 +26,12 @@ El reporte HTML se genera en la carpeta `reporte-html/index.html`.
 
 ## Resultados obtenidos
 
-| Endpoint | # Peticiones | Promedio (ms) | Mínimo (ms) | Máximo (ms) | Throughput (req/s) | Error % |
-|---|---|---|---|---|---|---|
-| GET Listar Cursos | 200 | 12.41 | 4 | 46 | 41.64 | 0.00% |
-| GET Listar Usuarios | 200 | 11.69 | 4 | 43 | 41.32 | 0.00% |
-| POST Login | 200 | 184.93 | 144 | 228 | 29.88 | 0.00% |
-| **Total combinado** | **600** | **69.68** | **4** | **228** | **89.65** | **0.00%** |
+|      Endpoint       | # Peticiones | Promedio (ms) | Mínimo (ms) | Máximo (ms) | Throughput (req/s) |  Error %  |
+|---------------------|--------------|---------------|-------------|-------------|--------------------|-----------|
+| GET Listar Cursos   |      200     |     12.41     |      4      |      46     |        41.64       |   0.00%   |
+| GET Listar Usuarios |      200     |     11.69     |      4      |      43     |        41.32       |   0.00%   |
+| POST Login          |      200     |    184.93     |     144     |     228     |        29.88       |   0.00%   |
+| **Total combinado** |    **600**   |   **69.68**   |    **4**    |   **228**   |      **89.65**     | **0.00%** |
 
 ## Conclusiones
 
