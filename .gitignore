@@ -16,3 +16,5 @@ tests/cypress/screenshots/
 
 # Otros
 .env
+tests/jmeter/reporte-html/
+tests/jmeter/*.jtl

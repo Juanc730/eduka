@@ -1,0 +1,115 @@
+name: Escaneo de Seguridad (OWASP ZAP)
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch: {}
+
+jobs:
+  zap-baseline-scan:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: ''
+          MYSQL_ALLOW_EMPTY_PASSWORD: yes
+          MYSQL_DATABASE: eduka_db
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=5
+
+    steps:
+      - name: Obtener código
+        uses: actions/checkout@v4
+
+      - name: Instalar PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo_mysql
+
+      - name: Crear archivo de configuración de base de datos
+        run: |
+          cat > backend/config/database.php << 'EOF'
+          <?php
+          $host     = '127.0.0.1';
+          $dbname   = 'eduka_db';
+          $username = 'root';
+          $password = '';
+          try {
+              $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password);
+              $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+              $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+          } catch (PDOException $e) {
+              header('Content-Type: application/json');
+              http_response_code(500);
+              echo json_encode(['error' => 'Error de conexión a la base de datos']);
+              exit;
+          }
+          ?>
+          EOF
+
+      - name: Esperar a que MySQL esté listo
+        run: |
+          until mysqladmin ping -h 127.0.0.1 --silent; do
+            sleep 1
+          done
+
+      - name: Crear esquema de base de datos
+        run: |
+          mysql -h 127.0.0.1 -u root eduka_db -e "
+          CREATE TABLE roles (id INT AUTO_INCREMENT PRIMARY KEY, nombre VARCHAR(50) NOT NULL);
+          CREATE TABLE usuarios (
+              id INT AUTO_INCREMENT PRIMARY KEY,
+              nombre VARCHAR(100) NOT NULL,
+              apellido VARCHAR(100) NOT NULL,
+              email VARCHAR(150) NOT NULL UNIQUE,
+              password VARCHAR(255) NOT NULL,
+              rol_id INT NOT NULL,
+              activo TINYINT(1) DEFAULT 1,
+              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              FOREIGN KEY (rol_id) REFERENCES roles(id)
+          );
+          CREATE TABLE login_intentos (
+              id INT AUTO_INCREMENT PRIMARY KEY,
+              email VARCHAR(150) NOT NULL,
+              ip VARCHAR(45) NOT NULL,
+              fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          );
+          INSERT INTO roles (nombre) VALUES ('administrador'), ('estudiante'), ('docente');
+          "
+
+      - name: Generar e insertar usuario admin
+        run: |
+          HASH_ADMIN=$(php -r "echo password_hash('password123', PASSWORD_DEFAULT);")
+          mysql -h 127.0.0.1 -u root eduka_db -e "
+          INSERT INTO usuarios (nombre, apellido, email, password, rol_id) VALUES
+          ('Admin', 'Eduka', 'admin@eduka.com', '$HASH_ADMIN', 1);
+          "
+
+      - name: Iniciar servidor PHP
+        run: |
+          php -S 0.0.0.0:8000 -t . > php-server.log 2>&1 &
+          sleep 3
+          curl -sf http://localhost:8000/frontend/pages/login.html || (cat php-server.log && exit 1)
+
+      - name: Ejecutar escaneo OWASP ZAP Baseline
+        uses: zaproxy/action-baseline@v0.12.0
+        with:
+          target: 'http://localhost:8000/frontend/pages/login.html'
+          cmd_options: '-a'
+          fail_action: false
+
+      - name: Subir reporte de ZAP
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reporte-zap
+          path: |
+            report_html.html
+            report_md.md
+            report_json.json
