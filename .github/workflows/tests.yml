@@ -309,14 +309,16 @@ jobs:
         run: |
           HASH_ADMIN=$(php -r "echo password_hash('password123', PASSWORD_DEFAULT);")
           HASH_ESTUDIANTE=$(php -r "echo password_hash('Test1234@', PASSWORD_DEFAULT);")
+          HASH_DOCENTE=$(php -r "echo password_hash('Eduka2026@', PASSWORD_DEFAULT);")
           mysql -h 127.0.0.1 -u root eduka_db -e "
           INSERT INTO usuarios (nombre, apellido, email, password, rol_id) VALUES
           ('Admin', 'Eduka', 'admin@eduka.com', '$HASH_ADMIN', 1),
-          ('Test', 'Usuario', 'test@eduka.com', '$HASH_ESTUDIANTE', 2);
+          ('Test', 'Usuario', 'test@eduka.com', '$HASH_ESTUDIANTE', 2),
+          ('Carlos', 'Docente', 'carlos.docente@eduka.com', '$HASH_DOCENTE', 3);
           "
       
       - name: Crear carpeta de uploads
-        run: mkdir -p uploads/comprobantes
+        run: mkdir -p uploads/comprobantes  
 
       - name: Iniciar servidor PHP
         run: |

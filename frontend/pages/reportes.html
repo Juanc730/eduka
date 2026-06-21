@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reportes — Instituto Eduka</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="navbar-brand">Instituto Eduka</div>
+    <div class="navbar-links">
+        <span id="nombre-usuario"></span>
+        <a href="dashboard.html">Inicio</a>
+        <a href="#" id="btn-logout">Cerrar sesión</a>
+    </div>
+</nav>
+
+<div class="dashboard-container">
+    <h1 style="color:#1a3c5e; margin-bottom:1.5rem;">Reportes</h1>
+    <div class="cards-grid" id="cards-reportes"></div>
+</div>
+
+<script src="../assets/js/api.js"></script>
+<script>
+if (!estaAutenticado()) {
+    window.location.href = 'login.html';
+}
+
+async function cargarUsuario() {
+    const { data } = await apiGet('/auth/me.php');
+    if (!data.success) {
+        window.location.href = 'login.html';
+        return;
+    }
+
+    document.getElementById('nombre-usuario').textContent = `Hola, ${data.data.nombre}`;
+    const cont = document.getElementById('cards-reportes');
+
+    if (data.data.rol === 'administrador') {
+        cont.innerHTML = `
+            <a href="reporte-matriculas.html" class="card">
+                <div class="card-icon">📋</div>
+                <h3>Matrículas por curso</h3>
+                <p>Ver cuántos estudiantes hay en cada curso y su estado</p>
+            </a>
+            <a href="reporte-pagos.html" class="card">
+                <div class="card-icon">💳</div>
+                <h3>Estado de pagos</h3>
+                <p>Resumen de pagos aprobados, pendientes y rechazados</p>
+            </a>
+            <a href="reporte-cursos.html" class="card">
+                <div class="card-icon">📚</div>
+                <h3>Ocupación de cursos</h3>
+                <p>Ver cupos disponibles y ocupados por curso</p>
+            </a>
+        `;
+    } else if (data.data.rol === 'docente') {
+        cont.innerHTML = `
+            <a href="reporte-matriculas.html" class="card">
+                <div class="card-icon">📋</div>
+                <h3>Mis estudiantes</h3>
+                <p>Ver los estudiantes matriculados en tus cursos</p>
+            </a>
+        `;
+    } else {
+        window.location.href = 'dashboard.html';
+    }
+}
+
+document.getElementById('btn-logout').addEventListener('click', function (e) {
+    e.preventDefault();
+    if (confirm('¿Estás seguro que deseas cerrar sesión?')) {
+        eliminarToken();
+        localStorage.removeItem('eduka_usuario');
+        window.location.href = 'login.html';
+    }
+});
+
+cargarUsuario();
+</script>
+
+</body>
+</html>

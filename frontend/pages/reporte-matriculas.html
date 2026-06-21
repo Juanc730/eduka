@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matrículas por Curso — Instituto Eduka</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="navbar-brand">Instituto Eduka</div>
+    <div class="navbar-links">
+        <span id="nombre-usuario"></span>
+        <a href="dashboard.html">Inicio</a>
+        <a href="#" id="btn-logout">Cerrar sesión</a>
+    </div>
+</nav>
+
+<div class="dashboard-container">
+    <div class="page-header">
+        <h1>Matrículas por Curso</h1>
+        <a href="reportes.html" class="btn-secondary">← Volver</a>
+    </div>
+
+    <div class="form-card" style="margin-bottom:1.5rem;">
+        <label>Selecciona un curso</label>
+        <select id="select-curso">
+            <option value="">-- Selecciona --</option>
+        </select>
+    </div>
+
+    <div id="contenido-reporte"></div>
+</div>
+
+<script src="../assets/js/api.js"></script>
+<script>
+if (!estaAutenticado()) {
+    window.location.href = 'login.html';
+}
+
+async function cargarUsuario() {
+    const { data } = await apiGet('/auth/me.php');
+    if (!data.success || !['administrador', 'docente'].includes(data.data.rol)) {
+        window.location.href = 'dashboard.html';
+        return;
+    }
+    document.getElementById('nombre-usuario').textContent = `Hola, ${data.data.nombre}`;
+}
+
+async function cargarCursos() {
+    const { data } = await apiGet('/reportes/matriculas.php');
+    if (!data.success) return;
+
+    const select = document.getElementById('select-curso');
+    data.data.cursos.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.id;
+        opt.textContent = c.nombre;
+        select.appendChild(opt);
+    });
+}
+
+async function cargarReporte(cursoId) {
+    const cont = document.getElementById('contenido-reporte');
+
+    if (!cursoId) {
+        cont.innerHTML = '';
+        return;
+    }
+
+    cont.innerHTML = '<p style="color:#666;">Cargando...</p>';
+
+    const { data } = await apiGet(`/reportes/matriculas.php?curso_id=${cursoId}`);
+
+    if (!data.success) {
+        cont.innerHTML = `<p class="error">${data.error}</p>`;
+        return;
+    }
+
+    const matriculas = data.data.matriculas;
+
+    if (matriculas.length === 0) {
+        cont.innerHTML = '<p style="color:#666;">No hay matrículas registradas para este curso.</p>';
+        return;
+    }
+
+    const confirmados = matriculas.filter(m => m.matricula_estado === 'confirmada').length;
+    const pendientes  = matriculas.filter(m => m.matricula_estado === 'pendiente').length;
+    const recaudado   = matriculas
+        .filter(m => m.pago_estado === 'aprobado')
+        .reduce((sum, m) => sum + parseFloat(m.monto || 0), 0);
+
+    let html = `
+        <div class="reporte-resumen">
+            <div class="resumen-card">
+                <span class="resumen-num">${matriculas.length}</span>
+                <span class="resumen-label">Total matriculados</span>
+            </div>
+            <div class="resumen-card">
+                <span class="resumen-num">${confirmados}</span>
+                <span class="resumen-label">Confirmados</span>
+            </div>
+            <div class="resumen-card">
+                <span class="resumen-num">${pendientes}</span>
+                <span class="resumen-label">Pendientes</span>
+            </div>
+            <div class="resumen-card">
+                <span class="resumen-num">S/ ${recaudado.toFixed(2)}</span>
+                <span class="resumen-label">Total recaudado</span>
+            </div>
+        </div>
+
+        <div class="table-container" style="margin-top:1.5rem;">
+            <table class="tabla">
+                <thead>
+                    <tr>
+                        <th>Estudiante</th>
+                        <th>Correo</th>
+                        <th>Fecha matrícula</th>
+                        <th>Estado matrícula</th>
+                        <th>Estado pago</th>
+                        <th>Monto</th>
+                        <th>Método</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${matriculas.map(m => `
+                        <tr>
+                            <td>${escapeHtml(m.estudiante)}</td>
+                            <td>${escapeHtml(m.email)}</td>
+                            <td>${new Date(m.fecha).toLocaleString('es-PE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</td>
+                            <td><span class="estado-badge estado-${m.matricula_estado}">${capitalize(m.matricula_estado)}</span></td>
+                            <td>${m.pago_estado
+                                ? `<span class="estado-badge estado-${m.pago_estado}">${capitalize(m.pago_estado)}</span>`
+                                : '<span style="color:#aaa;">Sin pago</span>'}
+                            </td>
+                            <td>${m.monto ? 'S/ ' + parseFloat(m.monto).toFixed(2) : '—'}</td>
+                            <td>${m.metodo_verificacion === 'codigo'
+                                ? '<span class="badge-activo">Código Yape</span>'
+                                : (m.metodo_verificacion === 'comprobante'
+                                    ? '<span class="estado-badge estado-pendiente">Comprobante</span>'
+                                    : '<span style="color:#aaa;">—</span>')}
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+
+    cont.innerHTML = html;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function capitalize(text) {
+    return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+document.getElementById('select-curso').addEventListener('change', function () {
+    cargarReporte(this.value);
+});
+
+document.getElementById('btn-logout').addEventListener('click', function (e) {
+    e.preventDefault();
+    if (confirm('¿Estás seguro que deseas cerrar sesión?')) {
+        eliminarToken();
+        localStorage.removeItem('eduka_usuario');
+        window.location.href = 'login.html';
+    }
+});
+
+cargarUsuario();
+cargarCursos();
+</script>
+
+</body>
+</html>

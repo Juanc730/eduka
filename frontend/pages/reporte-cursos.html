@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ocupación de Cursos — Instituto Eduka</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="navbar-brand">Instituto Eduka</div>
+    <div class="navbar-links">
+        <span id="nombre-usuario"></span>
+        <a href="dashboard.html">Inicio</a>
+        <a href="#" id="btn-logout">Cerrar sesión</a>
+    </div>
+</nav>
+
+<div class="dashboard-container">
+    <div class="page-header">
+        <h1>Ocupación de Cursos</h1>
+        <a href="reportes.html" class="btn-secondary">← Volver</a>
+    </div>
+
+    <div class="table-container">
+        <table class="tabla">
+            <thead>
+                <tr>
+                    <th>Curso</th>
+                    <th>Docente</th>
+                    <th>Horario</th>
+                    <th>Ocupados</th>
+                    <th>Disponibles</th>
+                    <th>Total</th>
+                    <th>Ocupación</th>
+                </tr>
+            </thead>
+            <tbody id="tabla-cursos">
+                <tr><td colspan="7" style="text-align:center; color:#666;">Cargando...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script src="../assets/js/api.js"></script>
+<script>
+if (!estaAutenticado()) {
+    window.location.href = 'login.html';
+}
+
+async function cargarUsuario() {
+    const { data } = await apiGet('/auth/me.php');
+    if (!data.success || data.data.rol !== 'administrador') {
+        window.location.href = 'dashboard.html';
+        return;
+    }
+    document.getElementById('nombre-usuario').textContent = `Hola, ${data.data.nombre}`;
+}
+
+async function cargarReporte() {
+    const { data } = await apiGet('/reportes/cursos.php');
+    const tabla = document.getElementById('tabla-cursos');
+
+    if (!data.success) {
+        tabla.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#e74c3c;">Error al cargar el reporte.</td></tr>';
+        return;
+    }
+
+    const cursos = data.data.cursos;
+
+    if (cursos.length === 0) {
+        tabla.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#666;">No hay cursos activos.</td></tr>';
+        return;
+    }
+
+    tabla.innerHTML = cursos.map(c => {
+        const porcentaje = c.cupos_totales > 0 ? Math.round((c.ocupados / c.cupos_totales) * 100) : 0;
+        const claseBarra = porcentaje >= 90 ? 'barra-roja' : (porcentaje >= 60 ? 'barra-amarilla' : 'barra-verde');
+
+        return `
+            <tr>
+                <td>${escapeHtml(c.nombre)}</td>
+                <td>${escapeHtml(c.docente || '—')}</td>
+                <td>${escapeHtml(c.horario)}</td>
+                <td>${c.ocupados}</td>
+                <td>${c.cupos_disponibles}</td>
+                <td>${c.cupos_totales}</td>
+                <td>
+                    <div class="barra-container">
+                        <div class="barra-fill ${claseBarra}" style="width:${porcentaje}%"></div>
+                    </div>
+                    <small>${porcentaje}%</small>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+document.getElementById('btn-logout').addEventListener('click', function (e) {
+    e.preventDefault();
+    if (confirm('¿Estás seguro que deseas cerrar sesión?')) {
+        eliminarToken();
+        localStorage.removeItem('eduka_usuario');
+        window.location.href = 'login.html';
+    }
+});
+
+cargarUsuario();
+cargarReporte();
+</script>
+
+</body>
+</html>
