@@ -103,6 +103,7 @@ jobs:
           target: 'http://localhost:8000/frontend/pages/login.html'
           cmd_options: '-a'
           fail_action: false
+          allow_issue_writing: false
 
       - name: Subir reporte de ZAP
         if: always()
