@@ -98,7 +98,7 @@ jobs:
           curl -sf http://localhost:8000/frontend/pages/login.html || (cat php-server.log && exit 1)
 
       - name: Ejecutar escaneo OWASP ZAP Baseline
-        uses: zaproxy/action-baseline@v0.12.0
+        uses: zaproxy/action-baseline@master
         with:
           target: 'http://localhost:8000/frontend/pages/login.html'
           cmd_options: '-a'
