@@ -31,15 +31,32 @@ docker run -v "<ruta_del_proyecto>:/zap/wrk/:rw" -t ghcr.io/zaproxy/zaproxy:stab
 
 ## Detalle de advertencias (WARN-NEW)
 
-| # | Advertencia | Riesgo | Descripción |
-|---|------------------------------------------------------------|-------|-------------|
-| 1 |            **Missing Anti-clickjacking Header**            |  Bajo | Falta la cabecera `X-Frame-Options`, que impide que el sitio sea embebido dentro de un `<iframe>` malicioso (ataque de clickjacking). |
-| 2 |          **X-Content-Type-Options Header Missing**         | Bajo | Falta `X-Content-Type-Options: nosniff`, que evita que el navegador interprete archivos con un tipo MIME distinto al declarado. |
-| 3 |       **Content Security Policy (CSP) Header Not Set**     | Medio | No se define una política de seguridad de contenido, que limita desde qué orígenes se pueden cargar scripts, estilos e imágenes (mitiga XSS). |
-| 4 |             **Storable and Cacheable Content**             | Bajo | Algunas respuestas pueden ser almacenadas en caché por el navegador o proxies intermedios. |
-| 5 |         **Permissions Policy Header Not Set** | Bajo | No se restringe qué APIs del navegador (cámara, micrófono, geolocalización, etc.) puede usar la página. |
-| 6 | **Cross-Origin-Embedder-Policy Header Missing or Invalid** | Bajo | Cabecera moderna de aislamiento de origen cruzado, recomendada pero no crítica para este tipo de aplicación. |
-| 7 | **Sec-Fetch-Dest Header is Missing** | Informativo | Cabecera relacionada con Fetch Metadata, usada por navegadores modernos para contexto adicional de seguridad. |
+| # |                        Advertencia                         |    Riesgo   |                       Descripción                         |
+|---|------------------------------------------------------------|-------------|-----------------------------------------------------------|
+|   |                                                            |             | Falta la cabecera `X-Frame-Options`, que impide que el    |
+| 1 |            **Missing Anti-clickjacking Header**            |     Bajo    | sitio sea embebido dentro de un `<iframe>` malicios       |
+|   |                                                            |             | (ataque de clickjacking).                                 |
+|---|------------------------------------------------------------|-------------|-----------------------------------------------------------|
+|   |                                                            |             | Falta `X-Content-Type-Options: nosniff`, que evita que el |
+| 2 |          **X-Content-Type-Options Header Missing**         |     Bajo    | navegador interprete archivos con un tipo MIME distinto   |
+|   |                                                            |             | al declarado.                                             |
+|---|------------------------------------------------------------|-------------|-----------------------------------------------------------|
+|   |                                                            |             | No se define una política de seguridad de contenido, que  |
+| 3 |       **Content Security Policy (CSP) Header Not Set**     |    Medio    | limita desde qué orígenes se pueden cargar scripts,       |
+|   |                                                            |             | estilos e imágenes (mitiga XSS).                          |
+|---|------------------------------------------------------------|-------------|-----------------------------------------------------------|
+|   |                                                            |             | Algunas respuestas pueden ser almacenadas en caché por el |
+| 4 |             **Storable and Cacheable Content**             |     Bajo    | navegador o proxies intermedios.                          |
+|---|------------------------------------------------------------|-------------|-----------------------------------------------------------|
+|   |                                                            |             | No se restringe qué APIs del navegador (cámara, micrófono,|
+| 5 |           **Permissions Policy Header Not Set**            |     Bajo    | geolocalización, etc.) puede usar la página.              |
+|---|------------------------------------------------------------|-------------|-----------------------------------------------------------|
+|   |                                                            |             | Cabecera moderna de aislamiento de origen cruzado,        |
+| 6 | **Cross-Origin-Embedder-Policy Header Missing or Invalid** |     Bajo    | recomendada pero no crítica para este tipo de aplicación. |
+|---|------------------------------------------------------------|-------------|-----------------------------------------------------------|
+|   |                                                            |             | Cabecera relacionada con Fetch Metadata, usada por        |
+| 7 |           **Sec-Fetch-Dest Header is Missing**             | Informativo | navegadores modernos para contexto adicional de seguridad.|
+|---|------------------------------------------------------------|-------------|-----------------------------------------------------------|
 
 ## Análisis
 

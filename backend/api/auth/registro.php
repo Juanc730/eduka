@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../helpers/response.php';
+require_once __DIR__ . '/../../helpers/validators.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     json_response([], 200);
@@ -10,19 +11,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     json_error('Método no permitido', 405);
 }
 
-function validar_password($password) {
-    if (strlen($password) < 8)
-        return 'La contraseña debe tener al menos 8 caracteres.';
-    if (!preg_match('/[A-Z]/', $password))
-        return 'La contraseña debe tener al menos una letra mayúscula.';
-    if (!preg_match('/[a-z]/', $password))
-        return 'La contraseña debe tener al menos una letra minúscula.';
-    if (!preg_match('/[0-9]/', $password))
-        return 'La contraseña debe tener al menos un número.';
-    if (!preg_match('/[\@\#\$\%\^\&\*\!\?\.\,\-\_]/', $password))
-        return 'La contraseña debe tener al menos un carácter especial.';
-    return '';
-}
 
 $input = json_decode(file_get_contents('php://input'), true);
 
