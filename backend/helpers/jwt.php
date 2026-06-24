@@ -1,5 +1,5 @@
 <?php
-// Clave secreta para firmar los tokens (en producción esto debe estar en variables de entorno)
+// Clave secreta para firmar los tokens
 define('JWT_SECRET', 'eduka_clave_secreta_2026_cambiar_en_produccion');
 define('JWT_EXPIRACION', 3600); // 1 hora en segundos
 
